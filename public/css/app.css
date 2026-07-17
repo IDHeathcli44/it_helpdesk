@@ -286,6 +286,32 @@ textarea:focus {
   border-color: var(--blue);
 }
 
+.sound-toggle-button {
+  min-height: 36px;
+  padding: 7px 11px;
+
+  color: #526176;
+  background: #f4f6f9;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.sound-toggle-button:hover {
+  background: #eaf0f8;
+}
+
+.sound-toggle-button.sound-enabled {
+  color: #17603a;
+  background: #e8f7ef;
+  border-color: #acd9bf;
+}
+
 button,
 .button {
   display: inline-flex;
