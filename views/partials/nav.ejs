@@ -2,10 +2,7 @@
   <aside class="sidebar">
     <a class="brand" href="/" aria-label="IT HelpDesk — головна">
       <span class="brand-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <rect x="3" y="4" width="18" height="13" rx="2"></rect>
-          <path d="M8 21h8M12 17v4"></path>
-        </svg>
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
       </span>
       <span>IT HelpDesk</span>
     </a>
@@ -14,86 +11,62 @@
       <nav class="sidebar-nav" aria-label="Головна навігація">
         <a class="nav-item <%= currentPath === '/' ? 'active' : '' %>" href="/">
           <span class="nav-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M3 11.5 12 4l9 7.5"></path>
-              <path d="M5 10v10h14V10M9 20v-6h6v6"></path>
-            </svg>
+            <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"></path><path d="M5 10v10h14V10M9 20v-6h6v6"></path></svg>
           </span>
-          <span>
-            <%= currentUser.role==='user' ? 'Мої заявки' : 'Усі заявки' %>
-          </span>
+          <span><%= currentUser.role === 'user' ? 'Мої заявки' : 'Усі заявки' %></span>
         </a>
 
         <a class="nav-item <%= currentPath.startsWith('/tickets/new') ? 'active' : '' %>" href="/tickets/new">
           <span class="nav-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="9"></circle>
-              <path d="M12 8v8M8 12h8"></path>
-            </svg>
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg>
           </span>
           <span>Створити заявку</span>
         </a>
 
 
-        <% if (['it', 'admin' ].includes(currentUser.role)) { %>
+        <% if (['it', 'admin'].includes(currentUser.role)) { %>
           <a class="nav-item <%= currentPath.startsWith('/equipment') ? 'active' : '' %>" href="/equipment">
-            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="13" rx="2"></rect>
-                <path d="M8 21h8M12 17v4"></path>
-              </svg></span>
+            <span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg></span>
             <span>Обладнання</span>
           </a>
-          <% } %>
+        <% } %>
 
-            <% if (['it', 'admin' ].includes(currentUser.role)) { %>
-              <a class="nav-item <%= currentPath.startsWith('/reports') ? 'active' : '' %>" href="/reports">
-                <span class="nav-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24">
-                    <path d="M4 19V9M10 19V5M16 19v-7M22 19V3"></path>
-                  </svg>
-                </span>
-                <span>Звіти</span>
-              </a>
-              <% } %>
+        <% if (['it', 'admin'].includes(currentUser.role)) { %>
+          <a class="nav-item <%= currentPath.startsWith('/reports') ? 'active' : '' %>" href="/reports">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M22 19V3"></path></svg>
+            </span>
+            <span>Звіти</span>
+          </a>
+        <% } %>
 
-                <% if (currentUser.role==='admin' ) { %>
-                  <div class="nav-divider"></div>
-                  <a class="nav-item <%= currentPath.startsWith('/admin/users') ? 'active' : '' %>" href="/admin/users">
-                    <span class="nav-icon" aria-hidden="true">
-                      <svg viewBox="0 0 24 24">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M19 8v6M16 11h6"></path>
-                      </svg>
-                    </span>
-                    <span>Користувачі</span>
-                  </a>
-                  <% } %>
+        <% if (currentUser.role === 'admin') { %>
+          <div class="nav-divider"></div>
+          <a class="nav-item <%= currentPath.startsWith('/admin/users') ? 'active' : '' %>" href="/admin/users">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M19 8v6M16 11h6"></path></svg>
+            </span>
+            <span>Користувачі</span>
+          </a>
+        <% } %>
 
-                    <a class="nav-item <%= currentPath.startsWith('/change-password') ? 'active' : '' %>"
-                      href="/change-password">
-                      <span class="nav-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24">
-                          <rect x="3" y="11" width="18" height="10" rx="2"></rect>
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                        </svg>
-                      </span>
-                      <span>Змінити пароль</span>
-                    </a>
+        <a class="nav-item <%= currentPath.startsWith('/change-password') ? 'active' : '' %>" href="/change-password">
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </span>
+          <span>Змінити пароль</span>
+        </a>
       </nav>
 
       <form action="/logout" method="post" class="sidebar-logout">
         <button class="nav-item nav-button" type="submit">
           <span class="nav-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M10 17l5-5-5-5M15 12H3"></path>
-              <path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"></path>
-            </svg>
+            <svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5M15 12H3"></path><path d="M14 3h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-5"></path></svg>
           </span>
           <span>Вийти</span>
         </button>
       </form>
-      <% } %>
+    <% } %>
   </aside>
 
   <div class="main-shell">
@@ -104,34 +77,16 @@
       </div>
       <% if (currentUser) { %>
         <button id="notificationButton" class="notification-button" type="button" aria-label="Сповіщення">
-          <svg viewBox="0 0 24 24">
-            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path>
-            <path d="M10 21h4"></path>
-          </svg>
+          <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
           <span id="notificationCount" class="notification-count" hidden>0</span>
         </button>
-        <button id="enableNotificationSound" class="sound-toggle-button" type="button"
-          title="Увімкнути звукові сповіщення">
-          🔇 Звук
-        </button>
-        <div id="notificationPanel" class="notification-panel" hidden>
-          <header><strong>Сповіщення</strong><button id="markNotificationsRead" type="button">Прочитати всі</button>
-          </header>
-          <div id="notificationList"></div>
-        </div>
+        <div id="notificationPanel" class="notification-panel" hidden><header><strong>Сповіщення</strong><button id="markNotificationsRead" type="button">Прочитати всі</button></header><div id="notificationList"></div></div>
         <div class="user-pill">
-          <span class="avatar">
-            <%= currentUser.fullName.charAt(0).toUpperCase() %>
-          </span>
+          <span class="avatar"><%= currentUser.fullName.charAt(0).toUpperCase() %></span>
           <span class="user-meta">
-            <strong>
-              <%= currentUser.fullName %>
-            </strong>
-            <small>
-              <%= currentUser.role==='admin' ? 'Адміністратор' : currentUser.role==='it' ? 'IT-спеціаліст'
-                : 'Користувач' %>
-            </small>
+            <strong><%= currentUser.fullName %></strong>
+            <small><%= currentUser.role === 'admin' ? 'Адміністратор' : currentUser.role === 'it' ? 'IT-спеціаліст' : 'Користувач' %></small>
           </span>
         </div>
-        <% } %>
+      <% } %>
     </header>
