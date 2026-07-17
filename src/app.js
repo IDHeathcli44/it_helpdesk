@@ -9,6 +9,12 @@ const ticketRoutes = require('./routes/ticketRoutes');
 const equipmentRoutes = require('./routes/equipmentRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 
+const sessionMiddleware = session({
+  secret: process.env.SESSION_SECRET || 'helpdesk-secret',
+  resave: false,
+  saveUninitialized: false,
+});
+
 const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
@@ -19,12 +25,12 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
   dotfiles: 'deny',
   index: false
 }));
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'replace-this-secret-before-production',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: 'lax', maxAge: 8 * 60 * 60 * 1000 }
-}));
+app.use(sessionMiddleware);
+
+module.exports = {
+  app,
+  sessionMiddleware,
+};
 app.use(exposeUser);
 app.use(exposeFlash);
 app.use((req, res, next) => {
@@ -54,4 +60,7 @@ app.use((error, req, res, next) => {
   return res.redirect(req.get('referer') || '/tickets/new');
 });
 app.use((req, res) => res.status(404).render('errors/404'));
-module.exports = app;
+module.exports = {
+  app,
+  sessionMiddleware,
+};
