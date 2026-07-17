@@ -1,0 +1,44 @@
+<%- include('../partials/head', { title: 'Вхід' }) %>
+
+<main class="auth-shell">
+  <section class="auth-visual">
+    <div class="auth-logo">
+      <span class="brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
+      </span>
+      <span>IT HelpDesk</span>
+    </div>
+    <h2>Зручний облік заявок без зайвих складнощів</h2>
+    <p>Створюйте звернення, відстежуйте їхній стан і отримуйте допомогу IT-відділу в одному місці.</p>
+  </section>
+
+  <section class="auth-form-area">
+    <div class="card auth-card">
+      <h1>Вхід у систему</h1>
+      <p class="auth-intro">Введіть логін і пароль свого облікового запису.</p>
+
+      <%- include('../partials/flash') %>
+
+      <form method="post" action="/login" class="form-grid">
+        <label>
+          Логін
+          <input name="username" required autocomplete="username">
+        </label>
+
+        <label>
+          Пароль
+          <input type="password" name="password" required autocomplete="current-password">
+        </label>
+
+        <button class="primary" type="submit">Увійти</button>
+      </form>
+
+      <p class="auth-footer-link">
+        Немає облікового запису?
+        <a href="/register">Зареєструватися</a>
+      </p>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,23 @@
+{
+  "name": "it-helpdesk-node",
+  "version": "0.3.1",
+  "private": true,
+  "description": "Editable IT HelpDesk with tickets, reports, equipment inventory and notifications",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "check": "node --check src/server.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "multer": "^2.2.0",
+    "xlsx": "^0.18.5"
+  }
+}

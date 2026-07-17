@@ -1,0 +1,101 @@
+<%- include('../partials/head', { title: `Користувач — ${targetUser.full_name}` }) %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <div class="page-title">
+    <div>
+      <a class="back-link" href="/admin/users">← До списку користувачів</a>
+      <h1><%= targetUser.full_name %></h1>
+      <p>Редагування профілю, ролі та параметрів входу.</p>
+    </div>
+  </div>
+
+  <%- include('../partials/flash') %>
+
+  <section class="card profile-card">
+    <form method="post" action="/admin/users/<%= targetUser.id %>" class="form-grid">
+      <div class="form-section-heading">
+        <h2>Основна інформація</h2>
+        <p class="muted">Логін може змінювати лише адміністратор.</p>
+      </div>
+
+      <div class="profile-form-grid">
+        <label>
+          ПІБ
+          <input name="fullName" value="<%= targetUser.full_name || '' %>" required maxlength="160">
+        </label>
+
+        <label>
+          Псевдонім
+          <input name="nickname" value="<%= targetUser.nickname || '' %>" maxlength="100" placeholder="Як звертатися до користувача">
+        </label>
+
+        <label>
+          Логін
+          <input name="username" value="<%= targetUser.username %>" required maxlength="80" autocomplete="off">
+          <small class="field-hint">Унікальне ім’я для входу в систему.</small>
+        </label>
+
+        <label>
+          Email
+          <input type="email" name="email" value="<%= targetUser.email || '' %>" maxlength="180">
+        </label>
+
+        <label>
+          Телефон
+          <input name="phone" value="<%= targetUser.phone || '' %>" maxlength="50">
+        </label>
+
+        <label>
+          Посада
+          <input name="position" value="<%= targetUser.position || '' %>" maxlength="120">
+        </label>
+
+        <label>
+          Відділ
+          <input name="department" value="<%= targetUser.department || '' %>" maxlength="120">
+        </label>
+
+        <label>
+          Кабінет / місце
+          <input name="office" value="<%= targetUser.office || '' %>" maxlength="100">
+        </label>
+
+        <label>
+          Роль
+          <select name="role">
+            <option value="user" <%= targetUser.role === 'user' ? 'selected' : '' %>>Користувач</option>
+            <option value="it" <%= targetUser.role === 'it' ? 'selected' : '' %>>IT-спеціаліст</option>
+            <option value="admin" <%= targetUser.role === 'admin' ? 'selected' : '' %>>Адміністратор</option>
+          </select>
+        </label>
+
+        <label>
+          Стан облікового запису
+          <select name="isActive">
+            <option value="1" <%= targetUser.is_active ? 'selected' : '' %>>Активний</option>
+            <option value="0" <%= !targetUser.is_active ? 'selected' : '' %>>Вимкнений</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="form-section-heading password-section">
+        <h2>Тимчасовий пароль</h2>
+        <p class="muted">Залиште поле порожнім, щоб не змінювати пароль.</p>
+      </div>
+
+      <label class="profile-password-field">
+        Новий тимчасовий пароль
+        <input type="password" name="temporaryPassword" minlength="8" autocomplete="new-password" placeholder="Щонайменше 8 символів">
+        <small class="field-hint">Після скидання користувач буде зобов’язаний змінити пароль під час наступного входу.</small>
+      </label>
+
+      <div class="form-actions">
+        <button class="primary" type="submit">Зберегти зміни</button>
+        <a class="secondary-button button-link" href="/admin/users">Скасувати</a>
+      </div>
+    </form>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

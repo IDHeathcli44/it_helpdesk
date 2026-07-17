@@ -1,0 +1,55 @@
+<%- include('../partials/head', { title: 'Заявки' }) %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <div class="page-title">
+    <div>
+      <h1><%= isStaff ? 'Усі заявки' : 'Мої заявки' %></h1>
+      <p>Контроль несправностей комп’ютерної техніки.</p>
+    </div>
+    <a class="button primary" href="/tickets/new">Створити заявку</a>
+  </div>
+
+  <%- include('../partials/flash') %>
+
+  <section class="stats-grid">
+    <article class="stat-card"><span>Усього</span><strong><%= stats.total || 0 %></strong></article>
+    <article class="stat-card"><span>Нові</span><strong><%= stats.new_count || 0 %></strong></article>
+    <article class="stat-card"><span>В роботі</span><strong><%= stats.in_progress_count || 0 %></strong></article>
+    <article class="stat-card"><span>Очікують</span><strong><%= stats.waiting_count || 0 %></strong></article>
+    <article class="stat-card"><span>Виконано</span><strong><%= stats.completed_count || 0 %></strong></article>
+  </section>
+
+  <section class="card table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>№</th><th>Тема</th><th>Категорія</th><th>Пріоритет</th><th>Статус</th>
+          <% if (isStaff) { %><th>Автор</th><th>Виконавець</th><% } %>
+          <th>Оновлено</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!tickets.length) { %>
+          <tr><td colspan="<%= isStaff ? 8 : 6 %>" class="empty">Заявок поки немає.</td></tr>
+        <% } %>
+        <% tickets.forEach(ticket => { %>
+          <tr class="clickable-row" data-href="/tickets/<%= ticket.id %>">
+            <td><a href="/tickets/<%= ticket.id %>">#<%= ticket.id %></a></td>
+            <td><strong><%= ticket.title %></strong><div class="muted"><%= ticket.description.slice(0, 90) %></div></td>
+            <td><%= ticket.category %></td>
+            <td><span class="badge priority-<%= ticket.priority %>"><%= priorityLabels[ticket.priority] %></span></td>
+            <td><span class="badge status-<%= ticket.status %>"><%= statusLabels[ticket.status] %></span></td>
+            <% if (isStaff) { %>
+              <td><%= ticket.creator_name || 'Видалений користувач' %></td>
+              <td><%= ticket.assignee_name || 'Не призначено' %></td>
+            <% } %>
+            <td><%= ticket.updated_at %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

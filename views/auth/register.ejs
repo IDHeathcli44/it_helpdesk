@@ -1,0 +1,66 @@
+<%- include('../partials/head', { title: 'Реєстрація' }) %>
+
+<main class="auth-shell">
+  <section class="auth-visual">
+    <div class="auth-logo">
+      <span class="brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path></svg>
+      </span>
+      <span>IT HelpDesk</span>
+    </div>
+    <h2>Реєстрація нового користувача</h2>
+    <p>Після створення облікового запису можна одразу подавати заявки та контролювати їх виконання.</p>
+  </section>
+
+  <section class="auth-form-area">
+    <div class="card auth-card">
+      <h1>Створити обліковий запис</h1>
+      <p class="auth-intro">Заповніть дані, які допоможуть IT-відділу швидше знайти вас.</p>
+
+      <%- include('../partials/flash') %>
+
+      <form method="post" action="/register" class="form-grid">
+        <label>
+          ПІБ
+          <input name="fullName" required autocomplete="name">
+        </label>
+
+        <label>
+          Логін
+          <input name="username" required autocomplete="username">
+        </label>
+
+        <div class="form-row">
+          <label>
+            Email
+            <input type="email" name="email" autocomplete="email">
+          </label>
+          <label>
+            Відділ
+            <input name="department">
+          </label>
+          <label>
+            Кабінет
+            <input name="office">
+          </label>
+        </div>
+
+        <label>
+          Пароль
+          <input type="password" name="password" minlength="8" required autocomplete="new-password">
+        </label>
+
+        <label>
+          Повторіть пароль
+          <input type="password" name="confirmPassword" minlength="8" required autocomplete="new-password">
+        </label>
+
+        <button class="primary" type="submit">Створити обліковий запис</button>
+      </form>
+
+      <p class="auth-footer-link"><a href="/login">Повернутися до входу</a></p>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

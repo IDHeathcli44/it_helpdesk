@@ -1,0 +1,90 @@
+<%- include('../partials/head', { title: 'Нова заявка' }) %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <div class="page-title">
+    <div>
+      <h1>Створити заявку</h1>
+      <p>Опишіть несправність — IT-відділ побачить звернення у спільному списку.</p>
+    </div>
+  </div>
+
+  <section class="card narrow">
+    <%- include('../partials/flash') %>
+
+    <form method="post" action="/tickets" enctype="multipart/form-data" class="form-grid">
+      <label>
+        Тема
+        <input name="title" required maxlength="160" placeholder="Наприклад: не друкує принтер">
+      </label>
+
+      <div class="form-row">
+        <label>
+          Категорія
+          <select name="category">
+            <option>Комп’ютер</option>
+            <option>Принтер</option>
+            <option>Мережа</option>
+            <option>Програма</option>
+            <option>СКУД</option>
+            <option>Інше</option>
+          </select>
+        </label>
+
+        <label>
+          Пріоритет
+          <select name="priority">
+            <option value="low">Низький</option>
+            <option value="normal" selected>Звичайний</option>
+            <option value="high">Високий</option>
+            <option value="critical">Критичний</option>
+          </select>
+        </label>
+      </div>
+
+      <label>
+        Обладнання
+        <select name="equipmentId">
+          <option value="">Не прив’язувати</option>
+          <% equipment.forEach(item => { %>
+            <option value="<%= item.id %>"><%= item.name %><%= item.asset_tag ? ' · ' + item.asset_tag : '' %></option>
+          <% }) %>
+        </select>
+        <small class="field-hint">Виберіть пристрій, з яким пов’язана несправність.</small>
+      </label>
+
+      <label>
+        Опис проблеми
+        <textarea name="description" rows="8" required placeholder="Що сталося, коли виникла проблема та які повідомлення бачите?"></textarea>
+      </label>
+
+      <div class="screenshot-upload">
+        <div class="screenshot-upload-header">
+          <div>
+            <strong>Скріншоти або зображення</strong>
+            <p>Можна додати до 5 файлів, не більше 10 МБ кожен.</p>
+          </div>
+        </div>
+
+        <label class="file-drop-field" for="screenshots">
+          <span class="file-drop-icon">＋</span>
+          <span>Натисніть, щоб вибрати зображення</span>
+          <small>PNG, JPG, WEBP, GIF та інші формати зображень</small>
+        </label>
+        <input id="screenshots" class="visually-hidden-file" type="file" name="screenshots" accept="image/*" multiple>
+        <div id="selected-files" class="selected-files" aria-live="polite"></div>
+
+        <aside class="screenshot-tip">
+          <strong>Як зробити скріншот у Windows</strong>
+          <span><kbd>Win</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> — виділити потрібну частину екрана.</span>
+          <span><kbd>PrtScn</kbd> — скопіювати весь екран у буфер обміну.</span>
+          <span><kbd>Alt</kbd> + <kbd>PrtScn</kbd> — скопіювати активне вікно.</span>
+        </aside>
+      </div>
+
+      <button class="primary" type="submit">Надіслати заявку</button>
+    </form>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

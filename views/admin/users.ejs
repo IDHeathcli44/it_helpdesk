@@ -1,0 +1,66 @@
+<%- include('../partials/head', { title: 'Користувачі' }) %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <div class="page-title">
+    <div>
+      <h1>Користувачі</h1>
+      <p>Створення, вимкнення та повне видалення облікових записів.</p>
+    </div>
+  </div>
+
+  <%- include('../partials/flash') %>
+
+  <section class="card">
+    <h2>Додати користувача</h2>
+    <form method="post" action="/admin/users" class="form-row">
+      <input name="fullName" placeholder="ПІБ" required>
+      <input name="username" placeholder="Логін" required>
+      <input type="password" name="password" minlength="8" placeholder="Тимчасовий пароль" required>
+      <select name="role" aria-label="Роль користувача">
+        <option value="user">Користувач</option>
+        <option value="it">IT-спеціаліст</option>
+        <option value="admin">Адміністратор</option>
+      </select>
+      <button class="primary" type="submit">Створити</button>
+    </form>
+  </section>
+
+  <section class="card table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Користувач</th>
+          <th>Роль</th>
+          <th>Стан</th>
+          <th>Перший вхід</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(user => { %>
+          <tr>
+            <td>
+              <a class="user-profile-link" href="/admin/users/<%= user.id %>"><strong><%= user.full_name %></strong></a>
+              <div class="muted"><%= user.username %><%= user.email ? ' · ' + user.email : '' %></div>
+            </td>
+            <td><%= user.role %></td>
+            <td><%= user.is_active ? 'Активний' : 'Вимкнений' %></td>
+            <td><%= user.must_change_password ? 'Потрібна зміна пароля' : 'Пароль встановлено' %></td>
+            <td class="actions">
+              <a class="small-action-link" href="/admin/users/<%= user.id %>">Редагувати</a>
+              <form method="post" action="/admin/users/<%= user.id %>/toggle">
+                <button type="submit"><%= user.is_active ? 'Вимкнути' : 'Увімкнути' %></button>
+              </form>
+              <form method="post" action="/admin/users/<%= user.id %>/delete" onsubmit="return confirm('Повністю видалити користувача?')">
+                <button class="danger" type="submit">Видалити</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

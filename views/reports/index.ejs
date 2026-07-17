@@ -1,0 +1,53 @@
+<%- include('../partials/head', { title: 'Звіти' }) %>
+<%- include('../partials/nav') %>
+
+<main class="container">
+  <div class="page-title">
+    <div><h1>Звітність</h1><p>Показники роботи IT-відділу та швидкості виконання заявок.</p></div>
+    <div class="report-actions"><a class="secondary button-link" href="/reports/export.csv?period=<%= period %>">Експорт CSV</a><form method="get" action="/reports" class="period-filter">
+      <select name="period" onchange="this.form.submit()">
+        <option value="7" <%= period === '7' ? 'selected' : '' %>>7 днів</option>
+        <option value="30" <%= period === '30' ? 'selected' : '' %>>30 днів</option>
+        <option value="90" <%= period === '90' ? 'selected' : '' %>>90 днів</option>
+        <option value="365" <%= period === '365' ? 'selected' : '' %>>Рік</option>
+        <option value="all" <%= period === 'all' ? 'selected' : '' %>>Увесь час</option>
+      </select>
+    </form></div>
+  </div>
+
+  <section class="stats-grid reports-stats">
+    <article class="stat-card"><span>Створено</span><strong><%= summary.total || 0 %></strong></article>
+    <article class="stat-card"><span>Виконано</span><strong><%= summary.completed || 0 %></strong></article>
+    <article class="stat-card"><span>Відкрито</span><strong><%= summary.open || 0 %></strong></article>
+    <article class="stat-card"><span>Середня реакція</span><strong class="metric-text"><%= formatDuration(summary.avg_response_minutes) %></strong></article>
+    <article class="stat-card"><span>Середній час заявки</span><strong class="metric-text"><%= formatDuration(summary.avg_resolution_minutes) %></strong></article>
+  </section>
+
+  <div class="report-grid">
+    <section class="card"><h2>За статусами</h2>
+      <div class="bar-list">
+        <% byStatus.forEach(item => { %><div><span><%= item.status %></span><progress value="<%= item.total %>" max="<%= summary.total || 1 %>"></progress><strong><%= item.total %></strong></div><% }) %>
+      </div>
+    </section>
+    <section class="card"><h2>За категоріями</h2>
+      <div class="bar-list">
+        <% byCategory.forEach(item => { %><div><span><%= item.category %></span><progress value="<%= item.total %>" max="<%= summary.total || 1 %>"></progress><strong><%= item.total %></strong></div><% }) %>
+      </div>
+    </section>
+  </div>
+
+  <section class="card table-wrap">
+    <h2>Робота виконавців</h2>
+    <table><thead><tr><th>Виконавець</th><th>Усього</th><th>Виконано</th><th>Середній час</th></tr></thead>
+      <tbody><% byAssignee.forEach(item => { %><tr><td><%= item.assignee %></td><td><%= item.total %></td><td><%= item.completed %></td><td><%= formatDuration(item.avg_minutes) %></td></tr><% }) %></tbody>
+    </table>
+  </section>
+
+  <section class="card"><h2>Останні 14 днів</h2>
+    <div class="daily-grid">
+      <% daily.forEach(item => { %><article><span><%= item.day %></span><strong><%= item.created %></strong><small>створено · <%= item.completed %> виконано</small></article><% }) %>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>
