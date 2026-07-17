@@ -254,8 +254,10 @@ document.querySelectorAll(".clickable-row[data-href]").forEach((row) => {
       console.warn("Сервер сповіщень тимчасово недоступний.", error);
     }
   }
-  button.addEventListener("click", async () => {
-    await unlockNotificationSound();
+
+  button.addEventListener("click", async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
 
     panel.hidden = !panel.hidden;
 
@@ -265,6 +267,11 @@ document.querySelectorAll(".clickable-row[data-href]").forEach((row) => {
 
     await loadNotifications(false);
   });
+
+  panel.addEventListener("click", (event) => {
+    event.stopPropagation();
+  });
+
   readButton.addEventListener("click", async () => {
     try {
       const response = await fetch("/api/notifications/read-all", {
