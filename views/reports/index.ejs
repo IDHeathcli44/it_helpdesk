@@ -4,7 +4,7 @@
 <main class="container">
   <div class="page-title">
     <div><h1>Звітність</h1><p>Показники роботи IT-відділу та швидкості виконання заявок.</p></div>
-    <div class="report-actions"><a class="secondary button-link" href="/reports/export.csv?period=<%= period %>">Експорт CSV</a><form method="get" action="/reports" class="period-filter">
+    <div class="report-actions"><a class="primary button-link" href="/reports/export.xlsx?period=<%= period %>">Експорт Excel</a><a class="secondary button-link" href="/reports/export.csv?period=<%= period %>">CSV</a><form method="get" action="/reports" class="period-filter">
       <select name="period" onchange="this.form.submit()">
         <option value="7" <%= period === '7' ? 'selected' : '' %>>7 днів</option>
         <option value="30" <%= period === '30' ? 'selected' : '' %>>30 днів</option>

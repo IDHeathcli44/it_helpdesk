@@ -3,12 +3,13 @@ const express = require('express');
 const session = require('express-session');
 const { exposeUser } = require('./middleware/auth');
 const { exposeFlash } = require('./utils/flash');
-const authRoutes = require('./routes/authRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const ticketRoutes = require('./routes/ticketRoutes');
-const equipmentRoutes = require('./routes/equipmentRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
-const healthRoutes = require("./api/routes/healthRoutes");
+const authRoutes = require('./modules/auth/authRoutes');
+const userRoutes = require('./modules/users/userRoutes');
+const ticketRoutes = require('./modules/tickets/ticketRoutes');
+const equipmentRoutes = require('./modules/equipment/equipmentRoutes');
+const notificationRoutes = require('./modules/notifications/notificationRoutes');
+const reportRoutes = require('./modules/reports/reportRoutes');
+const healthRoutes = require('./api/routes/healthRoutes');
 
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'helpdesk-secret',
@@ -46,9 +47,10 @@ app.use((req, res, next) => {
   next();
 });
 app.use(authRoutes);
-app.use('/admin', adminRoutes);
+app.use('/admin', userRoutes);
 app.use('/equipment', equipmentRoutes);
 app.use(notificationRoutes);
+app.use(reportRoutes);
 app.use(ticketRoutes);
 app.use((error, req, res, next) => {
   if (!error) return next();

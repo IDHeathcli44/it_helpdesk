@@ -55,7 +55,11 @@
 
       <label>
         Опис проблеми
-        <textarea name="description" rows="8" required placeholder="Що сталося, коли виникла проблема та які повідомлення бачите?"></textarea>
+        <textarea id="ticketDescription" name="description" rows="8" required placeholder="Що сталося, коли виникла проблема та які повідомлення бачите?"></textarea>
+        <small class="field-hint paste-image-hint">
+          Вставте скріншот прямо сюди: <kbd>Ctrl</kbd> + <kbd>V</kbd>. Зображення автоматично додасться до вкладень.
+        </small>
+        <small id="pasteImageStatus" class="paste-image-status" aria-live="polite"></small>
       </label>
 
       <div class="screenshot-upload">
@@ -71,7 +75,7 @@
           <span>Натисніть, щоб вибрати зображення</span>
           <small>PNG, JPG, WEBP, GIF та інші формати зображень</small>
         </label>
-        <input id="screenshots" class="visually-hidden-file" type="file" name="screenshots" accept="image/*" multiple>
+        <input id="screenshots" class="visually-hidden-file" type="file" name="screenshots" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp" multiple>
         <div id="selected-files" class="selected-files" aria-live="polite"></div>
 
         <aside class="screenshot-tip">

@@ -13,7 +13,7 @@ Phase 4.1 intentionally keeps the current authentication and authorization behav
 ## Request protection
 
 - Add CSRF protection to state-changing form and JSON endpoints without breaking the existing EJS forms.
-- Add rate limiting and abuse monitoring to login and public registration.
+- Add rate limiting and abuse monitoring to login, public registration and forgot-password requests.
 - Decide whether public self-registration remains an intended production feature.
 
 ## Upload security

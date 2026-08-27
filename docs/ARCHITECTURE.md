@@ -12,12 +12,30 @@ IT HelpDesk is currently a single Node.js process and a single deployable server
 
 ### HTTP application
 
-- `src/routes` maps the existing URLs to middleware and controllers.
-- `src/controllers` handles request validation, authorization checks, synchronous SQLite queries, redirects, flash messages, EJS rendering and JSON/CSV responses.
-- `src/services` contains shared ticket history/duration helpers and notification creation/delivery logic.
-- `src/middleware` contains role/authentication guards and Multer configuration for ticket images.
-- `src/utils` contains the session-backed flash-message helper.
-- `src/api/routes` currently contains the health endpoint. The existing notification JSON endpoints remain mounted through the legacy route module.
+- `src/modules` owns the backend vertical modules: `auth`, `users`, `tickets`, `equipment`, `notifications` and `reports`.
+- Each module separates HTTP routes, request/response controllers, application services and SQLite repositories. Controllers do not import the database.
+- `src/routes`, `src/controllers` and `src/services` are compatibility facades over the modules. They preserve the pre-Phase 4.2 import paths while new code uses `src/modules` directly.
+- `src/middleware` contains shared role/authentication guards and Multer configuration for ticket images.
+- `src/utils` contains the shared session-backed flash-message helper.
+- `src/api/routes` currently contains the public health endpoint. Notification JSON endpoints remain at their existing URLs through the notifications module.
+
+The enforced dependency direction is:
+
+```text
+route -> controller -> service -> repository -> SQLite
+```
+
+Cross-module behavior is called through services. For example, the tickets service asks the notifications service to deliver ticket events; it does not write notification rows itself.
+
+### Access recovery workflow
+
+The public `GET/POST /forgot-password` flow returns the same response whether or not a username exists. A valid active account receives one open `Відновлення доступу` ticket in the shared staff queue; repeated submissions reuse that ticket. Every active administrator and IT specialist receives a notification. `POST /tickets/:id/accept` uses a conditional database update so only the first staff member can claim an unassigned ticket.
+
+The assigned staff member may set a temporary password only from that accepted access-recovery ticket. The password value is never written to ticket history or notifications. On the next successful login, `must_change_password` forces the user to choose a new password without re-entering the temporary one. Voluntary password changes still require the current password.
+
+### Equipment inventory import
+
+The equipment module accepts `.xlsx`, `.xls` and `.csv` inventory files through an in-memory, size-limited upload. The downloadable Excel template documents the supported Ukrainian columns and type/status codes. Import validates every row, skips duplicates or invalid rows with a visible error summary, and keeps the existing manual equipment form available.
 
 ### Persistence
 
@@ -62,7 +80,7 @@ These accounts and their data are strictly for development and must never be use
 
 `data/helpdesk.db`, `data/helpdesk-dev.db`, any test database, and SQLite WAL/SHM files are ignored by Git. `data/.gitkeep` keeps the directory in a fresh clone. Development and test databases contain disposable non-production data and must not be committed.
 
-The current data model includes users, tickets, comments, ticket history, ticket attachments, equipment and notifications. Controllers currently contain most SQL; there is not yet a repository layer or a versioned migration system.
+The current data model includes users, tickets, comments, ticket history, ticket attachments, equipment and notifications. Module repositories now contain runtime SQL. There is not yet a versioned migration system.
 
 ### Server-rendered frontend
 
@@ -98,4 +116,4 @@ PostgreSQL
 
 This is a gradual migration, not a big-bang rewrite. The legacy EJS application will remain operational while backend modules and versioned API contracts are introduced. Pages can then move to the frontend one vertical slice at a time, with the existing URLs preserved or proxied. SQLite remains the active database until a separately planned, tested and reversible PostgreSQL migration phase.
 
-Phase 4.1 does not introduce PostgreSQL, Prisma, a frontend framework, new URL contracts or changes to roles and session-based authorization.
+Phase 4.2 modularizes the backend inside the existing process. It does not introduce PostgreSQL, Prisma, a frontend framework, new URL contracts, schema changes or changes to roles and session-based authorization. EJS controllers and the future REST API are expected to share these application services.

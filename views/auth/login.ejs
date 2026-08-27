@@ -22,7 +22,7 @@
       <form method="post" action="/login" class="form-grid">
         <label>
           Логін
-          <input name="username" required autocomplete="username">
+          <input name="username" value="<%= loginUsername %>" required autocomplete="username" autocapitalize="none" spellcheck="false">
         </label>
 
         <label>
@@ -32,6 +32,10 @@
 
         <button class="primary" type="submit">Увійти</button>
       </form>
+
+      <p class="auth-footer-link">
+        <a href="/forgot-password">Забули пароль?</a>
+      </p>
 
       <p class="auth-footer-link">
         Немає облікового запису?

@@ -1,16 +1,60 @@
 <%- include('../partials/head', { title: 'Обладнання' }) %>
+  <% const equipmentImportErrors = typeof importErrors === 'undefined' ? [] : importErrors; %>
   <%- include('../partials/nav') %>
     <main class="container">
-      <div class="page-title">
+      <div class="page-title equipment-page-title">
         <div>
           <h1>Обладнання</h1>
           <p>Комп’ютери, принтери та інша техніка підприємства.</p>
-        </div><a class="btn btn-primary add-equipment-button" href="/equipment/new">
-          <span class="button-icon">+</span>
-          Додати обладнання
-        </a>
+        </div>
       </div>
+      <section class="equipment-actions" aria-label="Дії з обладнанням">
+          <a class="secondary-button equipment-action-button template-download-button" href="/equipment/import-template.xlsx">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3v12"></path>
+              <path d="m7 10 5 5 5-5"></path>
+              <path d="M5 21h14"></path>
+            </svg>
+            <span>Завантажити шаблон Excel</span>
+          </a>
+          <form action="/equipment/import" method="post" enctype="multipart/form-data" class="equipment-import-form">
+            <label class="inventory-file-picker" for="inventoryFile">
+              <input id="inventoryFile" type="file" name="inventoryFile" accept=".xlsx,.xls,.csv" required>
+              <span class="inventory-file-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <path d="M14 2v6h6"></path>
+                </svg>
+              </span>
+              <span class="inventory-file-copy">
+                <strong>Файл інвентаризації</strong>
+                <small id="inventoryFileName">XLSX, XLS або CSV · до 10 МБ</small>
+              </span>
+              <span class="inventory-file-trigger">Обрати</span>
+            </label>
+            <button class="primary equipment-action-button" type="submit">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 21V9"></path>
+                <path d="m7 14 5-5 5 5"></path>
+                <path d="M5 3h14"></path>
+              </svg>
+              <span>Імпортувати обладнання</span>
+            </button>
+          </form>
+          <a class="btn btn-primary add-equipment-button" href="/equipment/new">
+            <span class="button-icon">+</span>
+            Додати обладнання
+          </a>
+      </section>
       <%- include('../partials/flash') %>
+        <% if (equipmentImportErrors.length) { %>
+          <section class="card import-errors">
+            <h2>Рядки, які не вдалося імпортувати</h2>
+            <ul>
+              <% equipmentImportErrors.forEach(error => { %><li><%= error %></li><% }) %>
+            </ul>
+          </section>
+        <% } %>
         <section class="stats-grid compact-stats">
           <article class="stat-card"><span>Усього</span><strong>
               <%= stats.total || 0 %>

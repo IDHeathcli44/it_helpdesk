@@ -68,6 +68,21 @@
       <% if (isStaff) { %>
         <section class="card">
           <h2>Керування заявкою</h2>
+          <% if (!ticket.assigned_to && !['done', 'closed'].includes(ticket.status)) { %>
+            <form action="/tickets/<%= ticket.id %>/accept" method="post" class="form-grid ticket-accept-form">
+              <button class="primary" type="submit">Прийняти заявку</button>
+            </form>
+          <% } %>
+          <% if (ticket.category === 'Відновлення доступу' && Number(ticket.assigned_to) === Number(currentUser.id)) { %>
+            <form action="/tickets/<%= ticket.id %>/reset-password" method="post" class="form-grid password-reset-form">
+              <label>
+                Тимчасовий пароль
+                <input type="password" name="temporaryPassword" minlength="8" required autocomplete="new-password">
+              </label>
+              <button class="secondary" type="submit">Встановити тимчасовий пароль</button>
+              <small class="field-hint">Передайте пароль користувачеві окремим безпечним каналом.</small>
+            </form>
+          <% } %>
           <form action="/tickets/<%= ticket.id %>/update" method="post" class="form-grid">
             <label>Статус
               <select name="status">
