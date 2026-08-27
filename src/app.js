@@ -8,6 +8,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
 const equipmentRoutes = require('./routes/equipmentRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const healthRoutes = require("./api/routes/healthRoutes");
 
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'helpdesk-secret',
@@ -37,6 +38,7 @@ app.use((req, res, next) => {
   res.locals.currentPath = req.path;
   next();
 });
+app.use("/api", healthRoutes);
 app.use((req, res, next) => {
   if (req.session.user?.mustChangePassword && !['/change-password', '/logout'].includes(req.path)) {
     return res.redirect('/change-password');

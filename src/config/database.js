@@ -1,8 +1,16 @@
-const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
 const bcrypt = require('bcryptjs');
+const {
+  resolveDatabaseEnvironment
+} = require('./databaseEnvironment');
 
-const dbPath = path.join(__dirname, '../../data/helpdesk.db');
+const databaseConfiguration = resolveDatabaseEnvironment();
+const {
+  environment: databaseEnvironment,
+  dbPath,
+  defaultDbPath,
+  developmentDbPath
+} = databaseConfiguration;
 const db = new DatabaseSync(dbPath);
 db.exec('PRAGMA foreign_keys = ON;');
 db.exec('PRAGMA journal_mode = WAL;');
@@ -160,4 +168,11 @@ function seedAccount(username, fullName, password, role) {
   `).run(username, fullName, role, passwordHash);
 }
 
-module.exports = { db, initializeDatabase };
+module.exports = {
+  db,
+  dbPath,
+  defaultDbPath,
+  developmentDbPath,
+  databaseEnvironment,
+  initializeDatabase
+};

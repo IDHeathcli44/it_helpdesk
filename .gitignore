@@ -1,4 +1,12 @@
-node_modules/
+node_modules
+data/helpdesk.db
+data/helpdesk-dev.db
+data/helpdesk-test.db
+data/helpdesk.db-shm
+data/helpdesk.db-wal
+data/*.db
+data/*.db-shm
+data/*.db-wal
 *.db-shm
 *.db-wal
 

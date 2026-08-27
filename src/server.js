@@ -1,5 +1,16 @@
 const http = require("node:http");
 const { Server } = require("socket.io");
+const {
+  databaseEnvironment,
+  initializeDatabase,
+} = require("./config/database");
+const { seedDevelopmentData } = require("./config/developmentSeed");
+
+initializeDatabase();
+
+if (databaseEnvironment === "development") {
+  seedDevelopmentData();
+}
 
 const {
   app,

@@ -309,8 +309,6 @@ function addComment(req, res) {
 
   setFlash(req, "success", "Коментар додано.");
   res.redirect(`/tickets/${ticketId}`);
-  setFlash(req, "success", "Коментар додано.");
-  res.redirect(`/tickets/${ticketId}`);
 }
 
 function update(req, res) {

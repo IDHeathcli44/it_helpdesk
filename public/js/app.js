@@ -154,21 +154,6 @@ document.querySelectorAll(".clickable-row[data-href]").forEach((row) => {
   }
 
   updateSoundButton();
-
-  if (soundButton) {
-    soundButton.addEventListener("click", async (event) => {
-      event.stopPropagation();
-
-      const enabled = await unlockNotificationSound();
-
-      if (enabled) {
-        // Одразу програємо сигнал як перевірку.
-        await playPdaSound();
-      }
-    });
-  }
-
-  updateSoundButton();
   function escapeHtml(value) {
     const div = document.createElement("div");
 
