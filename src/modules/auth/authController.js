@@ -18,17 +18,19 @@ function login(req, res) {
     return res.redirect('/login');
   }
 
-  delete req.session.loginUsername;
-
-  req.session.user = {
+  const sessionUser = {
     id: user.id,
     username: user.username,
     fullName: user.full_name,
     role: user.role,
     mustChangePassword: Boolean(user.must_change_password)
   };
-
-  return res.redirect(user.must_change_password ? '/change-password' : '/');
+  return startAuthenticatedSession(
+    req,
+    res,
+    sessionUser,
+    user.must_change_password ? '/change-password' : '/'
+  );
 }
 
 function showRegister(req, res) {
@@ -59,15 +61,20 @@ function register(req, res) {
       office,
       password
     });
-    req.session.user = {
+    const sessionUser = {
       id: Number(result.lastInsertRowid),
       username,
       fullName,
       role: 'user',
       mustChangePassword: false
     };
-    setFlash(req, 'success', 'Реєстрацію завершено.');
-    return res.redirect('/');
+    return startAuthenticatedSession(
+      req,
+      res,
+      sessionUser,
+      '/',
+      'Реєстрацію завершено.'
+    );
   } catch {
     setFlash(req, 'error', 'Такий логін або email уже використовується.');
     return res.redirect('/register');
@@ -133,6 +140,25 @@ function forgotPassword(req, res) {
 
 function logout(req, res) {
   req.session.destroy(() => res.redirect('/login'));
+}
+
+function startAuthenticatedSession(req, res, user, redirectTo, successMessage = null) {
+  req.session.regenerate((regenerateError) => {
+    if (regenerateError) {
+      console.error('Session regeneration error:', regenerateError);
+      return res.status(500).send('Не вдалося створити безпечну сесію. Спробуйте ще раз.');
+    }
+
+    req.session.user = user;
+    if (successMessage) setFlash(req, 'success', successMessage);
+    return req.session.save((saveError) => {
+      if (saveError) {
+        console.error('Session save error:', saveError);
+        return res.status(500).send('Не вдалося зберегти сесію. Спробуйте ще раз.');
+      }
+      return res.redirect(redirectTo);
+    });
+  });
 }
 
 module.exports = {

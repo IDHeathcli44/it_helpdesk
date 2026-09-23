@@ -5,6 +5,7 @@ const {
   initializeDatabase,
 } = require("./config/database");
 const { seedDevelopmentData } = require("./config/developmentSeed");
+const authService = require("./modules/auth/authService");
 
 initializeDatabase();
 
@@ -26,9 +27,12 @@ const io = new Server(httpServer);
 io.engine.use(sessionMiddleware);
 
 io.use((socket, next) => {
-  const user = socket.request.session?.user;
+  const sessionUser = socket.request.session?.user;
+  const user = sessionUser?.id
+    ? authService.getSessionUser(sessionUser.id)
+    : null;
 
-  if (!user?.id || !user?.role) {
+  if (!user?.id || !user?.role || !user.is_active || user.must_change_password) {
     return next(new Error("Unauthorized"));
   }
 

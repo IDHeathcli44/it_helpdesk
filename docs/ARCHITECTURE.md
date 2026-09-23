@@ -31,11 +31,11 @@ Cross-module behavior is called through services. For example, the tickets servi
 
 The public `GET/POST /forgot-password` flow returns the same response whether or not a username exists. A valid active account receives one open `Відновлення доступу` ticket in the shared staff queue; repeated submissions reuse that ticket. Every active administrator and IT specialist receives a notification. `POST /tickets/:id/accept` uses a conditional database update so only the first staff member can claim an unassigned ticket.
 
-The assigned staff member may set a temporary password only from that accepted access-recovery ticket. The password value is never written to ticket history or notifications. On the next successful login, `must_change_password` forces the user to choose a new password without re-entering the temporary one. Voluntary password changes still require the current password.
+The assigned staff member may set a temporary password only from that accepted, in-progress access-recovery ticket. Normal ticket editing cannot reassign access-recovery tickets. Setting the temporary password and completing the ticket happen in one database transaction, so the ticket is a one-time capability and a later legitimate request creates a new ticket. The password value is never written to ticket history or notifications. `must_change_password` is refreshed from the database on every request, so both new logins and already-open sessions are forced to choose a new password without re-entering the temporary one. Voluntary password changes still require the current password.
 
 ### Equipment inventory import
 
-The equipment module accepts `.xlsx`, `.xls` and `.csv` inventory files through an in-memory, size-limited upload. The downloadable Excel template documents the supported Ukrainian columns and type/status codes. Import validates every row, skips duplicates or invalid rows with a visible error summary, and keeps the existing manual equipment form available.
+The equipment module accepts `.xlsx`, `.xls` and `.csv` inventory files through an in-memory, size-limited upload. The downloadable Excel template documents the supported Ukrainian columns and type/status codes. Import validates every row, rejects ambiguous user identities instead of assigning equipment arbitrarily, skips duplicates or invalid rows with a visible error summary, and keeps the existing manual equipment form available.
 
 ### Persistence
 

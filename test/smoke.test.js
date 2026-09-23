@@ -12,6 +12,7 @@ test('database bootstrap, Express app load and public health endpoint', async ()
   const testDatabasePath = path.join(temporaryDirectory, 'helpdesk.test.db');
   let db;
   let server;
+  let uploadedAttachmentPath;
 
   const {
     defaultDbPath,
@@ -222,13 +223,68 @@ test('database bootstrap, Express app load and public health endpoint', async ()
     const loginResponse = await fetch(`${baseUrl}/login`, {
       method: 'POST',
       redirect: 'manual',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      headers: {
+        cookie: failedLoginCookie,
+        'content-type': 'application/x-www-form-urlencoded'
+      },
       body: new URLSearchParams({ username: 'dev-it', password: 'DevIt123!' })
     });
     assert.equal(loginResponse.status, 302);
     assert.equal(loginResponse.headers.get('location'), '/');
     const sessionCookie = loginResponse.headers.get('set-cookie')?.split(';', 1)[0];
-    assert.ok(sessionCookie, 'login returns the existing session cookie');
+    assert.ok(sessionCookie, 'login returns an authenticated session cookie');
+    assert.notEqual(sessionCookie, failedLoginCookie, 'login regenerates the session ID');
+
+    const staleUserLoginResponse = await fetch(`${baseUrl}/login`, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ username: 'dev-user1', password: 'DevUser123!' })
+    });
+    const staleUserCookie = staleUserLoginResponse.headers.get('set-cookie')?.split(';', 1)[0];
+    assert.ok(staleUserCookie);
+
+    const imageForm = new FormData();
+    imageForm.append('title', 'Screenshot upload regression');
+    imageForm.append('description', 'Checks safe stored file extensions.');
+    imageForm.append('category', 'Інше');
+    imageForm.append('priority', 'normal');
+    imageForm.append(
+      'screenshots',
+      new Blob([
+        Buffer.from(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+          'base64'
+        )
+      ], { type: 'image/png' }),
+      'spoofed.html'
+    );
+    const imageUploadResponse = await fetch(`${baseUrl}/tickets`, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { cookie: staleUserCookie },
+      body: imageForm
+    });
+    assert.equal(imageUploadResponse.status, 302);
+    const uploadedAttachment = db.prepare(`
+      SELECT stored_name FROM ticket_attachments
+      WHERE original_name = 'spoofed.html'
+      ORDER BY id DESC LIMIT 1
+    `).get();
+    assert.ok(uploadedAttachment);
+    assert.match(uploadedAttachment.stored_name, /\.png$/);
+    uploadedAttachmentPath = path.resolve(
+      __dirname,
+      '../uploads/tickets',
+      uploadedAttachment.stored_name
+    );
+    assert.equal(fs.existsSync(uploadedAttachmentPath), true);
+    const uploadedImageResponse = await fetch(
+      `${baseUrl}/uploads/tickets/${uploadedAttachment.stored_name}`
+    );
+    assert.equal(uploadedImageResponse.status, 200);
+    assert.equal(uploadedImageResponse.headers.get('content-type'), 'image/png');
+    assert.equal(uploadedImageResponse.headers.get('x-content-type-options'), 'nosniff');
 
     const voluntaryPasswordPage = await fetch(`${baseUrl}/change-password`, {
       headers: { cookie: sessionCookie }
@@ -251,6 +307,34 @@ test('database bootstrap, Express app load and public health endpoint', async ()
     assert.equal(acceptedTicket.assigned_to, itUserId);
     assert.equal(acceptedTicket.status, 'in_progress');
 
+    const adminLoginResponse = await fetch(`${baseUrl}/login`, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ username: 'dev-admin', password: 'DevAdmin123!' })
+    });
+    const adminCookie = adminLoginResponse.headers.get('set-cookie')?.split(';', 1)[0];
+    const adminId = db.prepare("SELECT id FROM users WHERE username = 'dev-admin'").get().id;
+    const resetReassignmentResponse = await fetch(
+      `${baseUrl}/tickets/${passwordResetTicket.id}/update`,
+      {
+        method: 'POST',
+        redirect: 'manual',
+        headers: {
+          cookie: adminCookie,
+          'content-type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({ status: 'in_progress', assignedTo: String(adminId) })
+      }
+    );
+    assert.equal(resetReassignmentResponse.status, 403);
+    assert.equal(
+      db.prepare('SELECT assigned_to FROM tickets WHERE id = ?')
+        .get(passwordResetTicket.id).assigned_to,
+      itUserId,
+      'password-reset ownership cannot be changed through the normal update flow'
+    );
+
     const temporaryPasswordResponse = await fetch(
       `${baseUrl}/tickets/${passwordResetTicket.id}/reset-password`,
       {
@@ -272,7 +356,7 @@ test('database bootstrap, Express app load and public health endpoint', async ()
     assert.equal(
       db.prepare('SELECT status FROM tickets WHERE id = ?')
         .get(passwordResetTicket.id).status,
-      'waiting'
+      'done'
     );
     assert.equal(
       db.prepare(`
@@ -282,6 +366,29 @@ test('database bootstrap, Express app load and public health endpoint', async ()
       false,
       'temporary password is not written to ticket history'
     );
+
+    const staleSessionResponse = await fetch(`${baseUrl}/`, {
+      headers: { cookie: staleUserCookie },
+      redirect: 'manual'
+    });
+    assert.equal(staleSessionResponse.status, 302);
+    assert.equal(staleSessionResponse.headers.get('location'), '/change-password');
+
+    const passwordAfterFirstReset = resetUser.password_hash;
+    await fetch(`${baseUrl}/tickets/${passwordResetTicket.id}/reset-password`, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: {
+        cookie: sessionCookie,
+        'content-type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({ temporaryPassword: 'SecondTemporary123!' })
+    });
+    const userAfterReplayAttempt = db.prepare(
+      'SELECT password_hash FROM users WHERE id = ?'
+    ).get(resetUser.id);
+    assert.equal(userAfterReplayAttempt.password_hash, passwordAfterFirstReset);
+    assert.equal(bcrypt.compareSync('SecondTemporary123!', userAfterReplayAttempt.password_hash), false);
 
     for (const route of ['/', '/tickets/new', '/equipment', '/reports']) {
       const authenticatedResponse = await fetch(`${baseUrl}${route}`, {
@@ -351,11 +458,16 @@ test('database bootstrap, Express app load and public health endpoint', async ()
       'a user cannot mark another user notification as read'
     );
 
+    db.prepare(`
+      INSERT INTO tickets (title, description, category, priority, created_by)
+      VALUES (?, ?, ?, ?, ?)
+    `).run('=HYPERLINK("https://invalid.example")', 'CSV injection regression', 'Інше', 'normal', resetUser.id);
     const reportResponse = await fetch(`${baseUrl}/reports/export.csv?period=30`, {
       headers: { cookie: sessionCookie }
     });
     assert.equal(reportResponse.status, 200);
     assert.equal(reportResponse.headers.get('content-type')?.includes('text/csv'), true);
+    assert.match(await reportResponse.text(), /"'=HYPERLINK\(""https:\/\/invalid\.example""\)"/);
 
     const excelResponse = await fetch(`${baseUrl}/reports/export.xlsx?period=30`, {
       headers: { cookie: sessionCookie }
@@ -431,19 +543,40 @@ test('database bootstrap, Express app load and public health endpoint', async ()
       db.prepare("SELECT id FROM users WHERE username = 'dev-user1'").get().id
     );
 
+    const sharedPasswordHash = db.prepare(
+      "SELECT password_hash FROM users WHERE username = 'dev-user2'"
+    ).get().password_hash;
+    db.prepare(`
+      INSERT INTO users (username, full_name, role, password_hash)
+      VALUES (?, ?, 'user', ?), (?, ?, 'user', ?)
+    `).run(
+      'duplicate-name-a', 'Однакове Ім’я', sharedPasswordHash,
+      'duplicate-name-b', 'Однакове Ім’я', sharedPasswordHash
+    );
+    const ambiguousWorkbook = XLSX.utils.book_new();
+    const ambiguousSheet = XLSX.utils.aoa_to_sheet([
+      ['Інвентарний номер', 'Тип', 'Назва', 'Користувач', 'Статус'],
+      ['TEST-AMBIGUOUS-001', 'Комп’ютер', 'Неоднозначний ПК', 'Однакове Ім’я', 'В експлуатації']
+    ]);
+    XLSX.utils.book_append_sheet(ambiguousWorkbook, ambiguousSheet, 'Інвентаризація');
+    const ambiguousResult = require('../src/modules/equipment/equipmentService').importInventory(
+      XLSX.write(ambiguousWorkbook, { type: 'buffer', bookType: 'xlsx' })
+    );
+    assert.equal(ambiguousResult.imported, 0);
+    assert.equal(ambiguousResult.skipped, 1);
+    assert.match(ambiguousResult.errors[0], /відповідає кільком користувачам/);
+    assert.equal(
+      db.prepare('SELECT COUNT(*) AS total FROM equipment WHERE asset_tag = ?')
+        .get('TEST-AMBIGUOUS-001').total,
+      0
+    );
+
     const adminResponse = await fetch(`${baseUrl}/admin/users`, {
       headers: { cookie: sessionCookie },
       redirect: 'manual'
     });
     assert.equal(adminResponse.status, 403, 'IT role still cannot open admin user management');
 
-    const adminLoginResponse = await fetch(`${baseUrl}/login`, {
-      method: 'POST',
-      redirect: 'manual',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ username: 'dev-admin', password: 'DevAdmin123!' })
-    });
-    const adminCookie = adminLoginResponse.headers.get('set-cookie')?.split(';', 1)[0];
     await fetch(`${baseUrl}/tickets/${passwordResetTicket.id}/accept`, {
       method: 'POST',
       redirect: 'manual',
@@ -486,6 +619,43 @@ test('database bootstrap, Express app load and public health endpoint', async ()
     ).get(resetUser.id);
     assert.equal(changedUser.must_change_password, 0);
     assert.equal(bcrypt.compareSync('NewUserPassword123!', changedUser.password_hash), true);
+
+    await fetch(`${baseUrl}/forgot-password`, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ username: 'dev-user1' })
+    });
+    const nextPasswordResetTicket = db.prepare(`
+      SELECT id, status FROM tickets
+      WHERE category = 'Відновлення доступу' AND created_by = ?
+      ORDER BY id DESC LIMIT 1
+    `).get(resetUser.id);
+    assert.notEqual(nextPasswordResetTicket.id, passwordResetTicket.id);
+    assert.equal(nextPasswordResetTicket.status, 'new');
+
+    const disabledLoginResponse = await fetch(`${baseUrl}/login`, {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ username: 'dev-user2', password: 'DevUser123!' })
+    });
+    const disabledCookie = disabledLoginResponse.headers.get('set-cookie')?.split(';', 1)[0];
+    const disabledUserId = db.prepare(
+      "SELECT id FROM users WHERE username = 'dev-user2'"
+    ).get().id;
+    db.prepare('UPDATE users SET is_active = 0 WHERE id = ?').run(disabledUserId);
+    const disabledWebResponse = await fetch(`${baseUrl}/`, {
+      headers: { cookie: disabledCookie },
+      redirect: 'manual'
+    });
+    assert.equal(disabledWebResponse.status, 302);
+    assert.equal(disabledWebResponse.headers.get('location'), '/login');
+    const disabledApiResponse = await fetch(`${baseUrl}/api/v1/session`, {
+      headers: { cookie: disabledCookie },
+      redirect: 'manual'
+    });
+    assert.equal(disabledApiResponse.status, 401);
   } finally {
     if (server?.listening) {
       await new Promise((resolve, reject) => {
@@ -493,6 +663,9 @@ test('database bootstrap, Express app load and public health endpoint', async ()
       });
     }
 
+    if (uploadedAttachmentPath && fs.existsSync(uploadedAttachmentPath)) {
+      fs.unlinkSync(uploadedAttachmentPath);
+    }
     if (db?.isOpen) db.close();
     delete process.env.HELPDESK_ENV;
     delete process.env.HELPDESK_DB_PATH;

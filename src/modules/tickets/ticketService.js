@@ -144,6 +144,9 @@ function addComment({ ticketId, body, user, io }) {
 function updateTicket({ ticketId, requestedStatus, requestedAssignee, user, io }) {
   const ticket = repository.findById(ticketId);
   if (!ticket) return { outcome: 'not_found' };
+  if (ticket.category === 'Відновлення доступу') {
+    return { outcome: 'reset_workflow_only' };
+  }
   const status = Object.hasOwn(STATUS_LABELS, requestedStatus)
     ? requestedStatus
     : ticket.status;
@@ -220,18 +223,32 @@ function setPasswordResetTemporaryPassword({ ticketId, user, temporaryPassword, 
   if (!ticket) return 'not_found';
   if (ticket.category !== 'Відновлення доступу') return 'wrong_category';
   if (Number(ticket.assigned_to) !== Number(user.id)) return 'not_assigned';
+  if (ticket.status !== 'in_progress') return 'not_available';
   if (String(temporaryPassword || '').length < 8) return 'short_password';
-  if (!userService.setTemporaryPassword(ticket.created_by, temporaryPassword)) {
-    return 'user_unavailable';
-  }
 
-  repository.markPasswordResetReady(ticketId);
-  repository.addHistory(
-    ticketId,
-    user.id,
-    'password_reset_ready',
-    'Встановлено тимчасовий пароль; очікується вхід користувача'
-  );
+  let outcome;
+  try {
+    outcome = repository.runInTransaction(() => {
+      const completed = repository.completePasswordReset(ticketId, user.id);
+      if (Number(completed.changes) === 0) return 'not_available';
+      if (!userService.setTemporaryPassword(ticket.created_by, temporaryPassword)) {
+        const error = new Error('Password-reset target is unavailable.');
+        error.code = 'RESET_USER_UNAVAILABLE';
+        throw error;
+      }
+      repository.addHistory(
+        ticketId,
+        user.id,
+        'password_reset_ready',
+        'Встановлено тимчасовий пароль; заявка виконана'
+      );
+      return 'ok';
+    });
+  } catch (error) {
+    if (error.code === 'RESET_USER_UNAVAILABLE') return 'user_unavailable';
+    throw error;
+  }
+  if (outcome !== 'ok') return outcome;
   notificationService.notifyTicketOwner({
     io,
     ticket,

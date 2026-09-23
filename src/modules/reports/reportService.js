@@ -16,7 +16,11 @@ function getDashboard(periodValue) {
 function exportCsv(periodValue) {
   const period = normalizePeriod(periodValue);
   const rows = repository.getExportRows(period);
-  const escape = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+  const escape = (value) => {
+    let text = String(value ?? '');
+    if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+    return `"${text.replaceAll('"', '""')}"`;
+  };
   const csvRows = rows.map(toExportRow);
   return {
     period,

@@ -10,6 +10,10 @@ function authenticate(username, password) {
   return user;
 }
 
+function getSessionUser(userId) {
+  return repository.findById(userId);
+}
+
 function register(data) {
   return repository.createUser({
     ...data,
@@ -47,6 +51,7 @@ function requestPasswordReset({ username, io }) {
 
 module.exports = {
   authenticate,
+  getSessionUser,
   register,
   verifyCurrentPassword,
   changePassword,

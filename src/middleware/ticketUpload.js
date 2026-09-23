@@ -6,10 +6,18 @@ const multer = require('multer');
 const uploadDirectory = path.join(__dirname, '../../uploads/tickets');
 fs.mkdirSync(uploadDirectory, { recursive: true });
 
+const EXTENSION_BY_MIME_TYPE = new Map([
+  ['image/jpeg', '.jpg'],
+  ['image/png', '.png'],
+  ['image/webp', '.webp'],
+  ['image/gif', '.gif'],
+  ['image/bmp', '.bmp']
+]);
+
 const storage = multer.diskStorage({
   destination: (req, file, callback) => callback(null, uploadDirectory),
   filename: (req, file, callback) => {
-    const extension = path.extname(file.originalname).toLowerCase().slice(0, 12);
+    const extension = EXTENSION_BY_MIME_TYPE.get(file.mimetype) || '.bin';
     callback(null, `${Date.now()}-${crypto.randomUUID()}${extension}`);
   }
 });
@@ -21,15 +29,7 @@ const uploadTicketImages = multer({
     files: 5
   },
   fileFilter: (req, file, callback) => {
-    const allowedMimeTypes = new Set([
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'image/gif',
-      'image/bmp'
-    ]);
-
-    if (!allowedMimeTypes.has(file.mimetype)) {
+    if (!EXTENSION_BY_MIME_TYPE.has(file.mimetype)) {
       return callback(new Error('Дозволені формати: JPG, PNG, WEBP, GIF або BMP.'));
     }
     return callback(null, true);

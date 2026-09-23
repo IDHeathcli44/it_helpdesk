@@ -8,6 +8,7 @@ const IMPORT_HEADERS = [
   'RAM (ГБ)', 'Накопичувач', 'Відділ', 'Кабінет', 'Користувач',
   'Статус', 'Примітки'
 ];
+const AMBIGUOUS_USER = Symbol('ambiguous-user');
 
 function getList(query) {
   const filters = {
@@ -165,7 +166,17 @@ function normalizeImportRow(row, users) {
   ]);
   let assignedUserId = null;
   if (assignedUser) {
-    assignedUserId = users.get(String(assignedUser).trim().toLowerCase()) || null;
+    const userKey = String(assignedUser).trim().toLowerCase();
+    const directMatch = users.direct.get(userKey);
+    const matchedUser = directMatch === undefined
+      ? users.names.get(userKey)
+      : directMatch;
+    if (matchedUser === AMBIGUOUS_USER) {
+      throw new Error(
+        `значення «${assignedUser}» відповідає кільком користувачам; укажіть унікальний логін або email`
+      );
+    }
+    assignedUserId = matchedUser || null;
     if (!assignedUserId) throw new Error(`користувача «${assignedUser}» не знайдено`);
   }
 
@@ -197,13 +208,22 @@ function normalizeImportRow(row, users) {
 }
 
 function createUserLookup(users) {
-  const lookup = new Map();
+  const direct = new Map();
+  const names = new Map();
   for (const user of users) {
-    for (const identity of [user.username, user.email, user.full_name]) {
-      if (identity) lookup.set(String(identity).trim().toLowerCase(), user.id);
-    }
+    addUserIdentity(direct, user.username, user.id);
+    addUserIdentity(direct, user.email, user.id);
+    addUserIdentity(names, user.full_name, user.id);
   }
-  return lookup;
+  return { direct, names };
+}
+
+function addUserIdentity(lookup, identity, userId) {
+  if (!identity) return;
+  const key = String(identity).trim().toLowerCase();
+  const existing = lookup.get(key);
+  if (existing === undefined || existing === userId) lookup.set(key, userId);
+  else lookup.set(key, AMBIGUOUS_USER);
 }
 
 function matchDictionary(value, dictionary, aliases) {

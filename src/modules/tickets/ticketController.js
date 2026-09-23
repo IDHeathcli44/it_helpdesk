@@ -91,6 +91,9 @@ function update(req, res) {
     setFlash(req, 'error', 'Вибраного виконавця не знайдено.');
     return res.redirect(`/tickets/${ticketId}`);
   }
+  if (result.outcome === 'reset_workflow_only') {
+    return res.status(403).render('errors/403');
+  }
   setFlash(req, 'success', result.changed ? 'Заявку оновлено.' : 'Змін не було.');
   return res.redirect(`/tickets/${ticketId}`);
 }
@@ -127,6 +130,8 @@ function setTemporaryPassword(req, res) {
   }
   if (outcome === 'short_password') {
     setFlash(req, 'error', 'Тимчасовий пароль має містити щонайменше 8 символів.');
+  } else if (outcome === 'not_available') {
+    setFlash(req, 'error', 'Цю заявку вже виконано або вона більше не доступна для скидання пароля.');
   } else if (outcome === 'user_unavailable') {
     setFlash(req, 'error', 'Користувача не знайдено або його обліковий запис вимкнено.');
   } else {

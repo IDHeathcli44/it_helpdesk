@@ -229,12 +229,29 @@ function acceptTicket(id, userId) {
   `).run(userId, id);
 }
 
-function markPasswordResetReady(id) {
+function completePasswordReset(id, assignedTo) {
   return db.prepare(`
     UPDATE tickets
-    SET status = 'waiting', updated_at = CURRENT_TIMESTAMP
+    SET status = 'done',
+      resolved_at = COALESCE(resolved_at, CURRENT_TIMESTAMP),
+      updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `).run(id);
+      AND assigned_to = ?
+      AND category = 'Відновлення доступу'
+      AND status = 'in_progress'
+  `).run(id, assignedTo);
+}
+
+function runInTransaction(callback) {
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    const result = callback();
+    db.exec('COMMIT');
+    return result;
+  } catch (error) {
+    try { db.exec('ROLLBACK'); } catch (_) { /* transaction was not started */ }
+    throw error;
+  }
 }
 
 function addHistory(ticketId, userId, eventType, details) {
@@ -261,6 +278,7 @@ module.exports = {
   findActiveStaffById,
   updateTicket,
   acceptTicket,
-  markPasswordResetReady,
+  completePasswordReset,
+  runInTransaction,
   addHistory
 };

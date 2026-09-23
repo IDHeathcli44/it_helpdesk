@@ -1,7 +1,7 @@
 const path = require('node:path');
 const express = require('express');
 const session = require('express-session');
-const { exposeUser } = require('./middleware/auth');
+const { refreshSessionUser, exposeUser } = require('./middleware/auth');
 const { exposeFlash } = require('./utils/flash');
 const authRoutes = require('./modules/auth/authRoutes');
 const userRoutes = require('./modules/users/userRoutes');
@@ -17,6 +17,11 @@ const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'helpdesk-secret',
   resave: false,
   saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.SESSION_COOKIE_SECURE === 'true'
+  }
 });
 
 const app = express();
@@ -27,9 +32,14 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
   dotfiles: 'deny',
-  index: false
+  index: false,
+  setHeaders: (res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+  }
 }));
 app.use(sessionMiddleware);
+app.use(refreshSessionUser);
 app.use('/api/v1', apiV1Router);
 // Also catches parser errors raised before the router is entered.
 app.use('/api/v1', apiErrorHandler);
@@ -60,10 +70,15 @@ app.use(ticketRoutes);
 app.use((error, req, res, next) => {
   if (!error) return next();
   console.error(error);
+  const inventoryUpload = error.field === 'inventoryFile';
   const message = error.code === 'LIMIT_FILE_SIZE'
-    ? 'Одне із зображень перевищує 10 МБ.'
+    ? inventoryUpload
+      ? 'Файл інвентаризації перевищує 10 МБ.'
+      : 'Одне із зображень перевищує 10 МБ.'
     : error.code === 'LIMIT_FILE_COUNT' || error.code === 'LIMIT_UNEXPECTED_FILE'
-      ? 'До заявки можна прикріпити не більше 5 зображень.'
+      ? inventoryUpload
+        ? 'Можна завантажити лише один файл інвентаризації.'
+        : 'До заявки можна прикріпити не більше 5 зображень.'
       : error.message || 'Не вдалося завантажити файл.';
   req.session.flash = { type: 'error', message };
   return res.redirect(req.get('referer') || '/tickets/new');

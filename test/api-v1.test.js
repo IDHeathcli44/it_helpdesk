@@ -301,6 +301,22 @@ test('real server initializes Socket.IO with existing session authentication', a
     await fetch(transportUrl, { method: 'POST', headers, body: '40' });
     assert.match(await (await fetch(transportUrl, { headers })).text(), /^40/);
     await fetch(transportUrl, { method: 'POST', headers, body: '41' });
+
+    db.prepare("UPDATE users SET is_active = 0 WHERE username = 'dev-it'").run();
+    try {
+      const disabledHandshake = await fetch(
+        `${url}/socket.io/?EIO=4&transport=polling`,
+        { headers }
+      );
+      const disabledSid = JSON.parse((await disabledHandshake.text()).slice(1)).sid;
+      const disabledTransportUrl =
+        `${url}/socket.io/?EIO=4&transport=polling&sid=${disabledSid}`;
+      await fetch(disabledTransportUrl, { method: 'POST', headers, body: '40' });
+      const disabledSocket = await fetch(disabledTransportUrl, { headers });
+      assert.match(await disabledSocket.text(), /Unauthorized/);
+    } finally {
+      db.prepare("UPDATE users SET is_active = 1 WHERE username = 'dev-it'").run();
+    }
   } finally {
     if (child.exitCode === null) {
       const exited = new Promise(resolve => child.once('exit', resolve));

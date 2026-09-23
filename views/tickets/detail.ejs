@@ -73,7 +73,7 @@
               <button class="primary" type="submit">Прийняти заявку</button>
             </form>
           <% } %>
-          <% if (ticket.category === 'Відновлення доступу' && Number(ticket.assigned_to) === Number(currentUser.id)) { %>
+          <% if (ticket.category === 'Відновлення доступу' && ticket.status === 'in_progress' && Number(ticket.assigned_to) === Number(currentUser.id)) { %>
             <form action="/tickets/<%= ticket.id %>/reset-password" method="post" class="form-grid password-reset-form">
               <label>
                 Тимчасовий пароль
@@ -83,6 +83,7 @@
               <small class="field-hint">Передайте пароль користувачеві окремим безпечним каналом.</small>
             </form>
           <% } %>
+          <% if (ticket.category !== 'Відновлення доступу') { %>
           <form action="/tickets/<%= ticket.id %>/update" method="post" class="form-grid">
             <label>Статус
               <select name="status">
@@ -101,6 +102,7 @@
             </label>
             <button class="primary" type="submit">Зберегти зміни</button>
           </form>
+          <% } %>
         </section>
       <% } %>
 

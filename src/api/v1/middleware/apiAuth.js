@@ -2,7 +2,7 @@ const { sendError } = require('./apiErrorHandler');
 
 function apiAuth(req, res, next) {
   res.set('Cache-Control', 'no-store');
-  if (!req.session.user) return sendError(res, 401, 'UNAUTHENTICATED', 'Authentication required');
+  if (!req.session?.user) return sendError(res, 401, 'UNAUTHENTICATED', 'Authentication required');
   next();
 }
 
