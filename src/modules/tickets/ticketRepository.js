@@ -1,13 +1,31 @@
 const { db } = require('../../config/database');
 
-function listDashboard({ staff, userId }) {
-  const where = staff ? '' : 'WHERE t.created_by = ?';
+function listDashboard({ staff, userId, filters = {} }) {
+  const conditions = staff ? [] : ['t.created_by = ?'];
   const params = staff ? [] : [userId];
+  for (const field of ['status', 'priority']) {
+    if (filters[field]) {
+      conditions.push(`t.${field} = ?`);
+      params.push(filters[field]);
+    }
+  }
+  if (filters.search) {
+    conditions.push('(t.title LIKE ? OR t.description LIKE ?)');
+    params.push(`%${filters.search}%`, `%${filters.search}%`);
+  }
+  if (filters.assigned === 'unassigned') conditions.push('t.assigned_to IS NULL');
+  else if (filters.assigned) {
+    conditions.push('t.assigned_to = ?');
+    params.push(filters.assigned === 'me' ? userId : Number(filters.assigned));
+  }
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
   return db.prepare(`
-    SELECT t.*, creator.full_name AS creator_name, assignee.full_name AS assignee_name
+    SELECT t.*, creator.full_name AS creator_name, assignee.full_name AS assignee_name,
+      e.name AS equipment_name, e.asset_tag AS equipment_asset_tag
     FROM tickets t
     LEFT JOIN users creator ON creator.id = t.created_by
     LEFT JOIN users assignee ON assignee.id = t.assigned_to
+    LEFT JOIN equipment e ON e.id = t.equipment_id
     ${where}
     ORDER BY CASE t.status
       WHEN 'new' THEN 1 WHEN 'in_progress' THEN 2 WHEN 'waiting' THEN 3

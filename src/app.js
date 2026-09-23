@@ -10,6 +10,8 @@ const equipmentRoutes = require('./modules/equipment/equipmentRoutes');
 const notificationRoutes = require('./modules/notifications/notificationRoutes');
 const reportRoutes = require('./modules/reports/reportRoutes');
 const healthRoutes = require('./api/routes/healthRoutes');
+const apiV1Router = require('./api/v1/apiRouter');
+const { apiErrorHandler } = require('./api/v1/middleware/apiErrorHandler');
 
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'helpdesk-secret',
@@ -28,6 +30,9 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
   index: false
 }));
 app.use(sessionMiddleware);
+app.use('/api/v1', apiV1Router);
+// Also catches parser errors raised before the router is entered.
+app.use('/api/v1', apiErrorHandler);
 
 module.exports = {
   app,

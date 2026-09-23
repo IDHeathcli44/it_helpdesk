@@ -19,6 +19,18 @@ function getDashboard(user) {
   };
 }
 
+function getList(user, query = {}) {
+  const filters = {
+    search: String(query.search || '').trim(),
+    status: Object.hasOwn(STATUS_LABELS, query.status) ? query.status : '',
+    priority: Object.hasOwn(PRIORITY_LABELS, query.priority) ? query.priority : '',
+    assigned: ['me', 'unassigned'].includes(query.assigned) ||
+      (/^[1-9]\d*$/.test(query.assigned || '') && Number.isSafeInteger(Number(query.assigned)))
+      ? query.assigned : ''
+  };
+  return repository.listDashboard({ staff: isStaff(user), userId: user.id, filters });
+}
+
 function getCreateData(user) {
   return {
     equipment: repository.listSelectableEquipment({
@@ -249,6 +261,7 @@ module.exports = {
   PRIORITY_LABELS,
   isStaff,
   getDashboard,
+  getList,
   getCreateData,
   createTicket,
   notifyTicketCreated,

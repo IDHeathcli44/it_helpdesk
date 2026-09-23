@@ -1,0 +1,27 @@
+const express = require('express');
+const { apiAuth, requireRole, requirePasswordChanged } = require('./middleware/apiAuth');
+const { notFound } = require('./middleware/apiErrorHandler');
+const session = require('./controllers/sessionApiController');
+const tickets = require('./controllers/ticketApiController');
+const equipment = require('./controllers/equipmentApiController');
+const notifications = require('./controllers/notificationApiController');
+const users = require('./controllers/userApiController');
+const reports = require('./controllers/reportApiController');
+
+const router = express.Router();
+router.use(apiAuth);
+router.param('id', require('./middleware/validateId'));
+router.get('/session', session.show);
+const ready = requirePasswordChanged;
+const staff = requireRole('it', 'admin');
+const admin = requireRole('admin');
+router.get('/tickets', ready, tickets.list);
+router.get('/tickets/:id', ready, tickets.show);
+router.get('/equipment', ready, staff, equipment.list);
+router.get('/equipment/:id', ready, staff, equipment.show);
+router.get('/notifications', ready, notifications.list);
+router.get('/users', ready, admin, users.list);
+router.get('/users/:id', ready, admin, users.show);
+router.get('/reports/summary', ready, staff, reports.summary);
+router.use(notFound);
+module.exports = router;
