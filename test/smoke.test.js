@@ -396,6 +396,15 @@ test('database bootstrap, Express app load and public health endpoint', async ()
         redirect: 'manual'
       });
       assert.equal(authenticatedResponse.status, 200, `${route} keeps its authenticated URL`);
+
+      if (route === '/reports') {
+        const reportsHtml = await authenticatedResponse.text();
+        assert.match(
+          reportsHtml,
+          /class="button primary button-link report-export-button" href="\/reports\/export\.xlsx\?period=30"/
+        );
+        assert.match(reportsHtml, />\s*<span>Експорт в Excel<\/span>/);
+      }
     }
 
     const notificationResponse = await fetch(`${baseUrl}/api/notifications`, {

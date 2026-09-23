@@ -4,15 +4,26 @@
 <main class="container">
   <div class="page-title">
     <div><h1>Звітність</h1><p>Показники роботи IT-відділу та швидкості виконання заявок.</p></div>
-    <div class="report-actions"><a class="primary button-link" href="/reports/export.xlsx?period=<%= period %>">Експорт Excel</a><a class="secondary button-link" href="/reports/export.csv?period=<%= period %>">CSV</a><form method="get" action="/reports" class="period-filter">
-      <select name="period" onchange="this.form.submit()">
-        <option value="7" <%= period === '7' ? 'selected' : '' %>>7 днів</option>
-        <option value="30" <%= period === '30' ? 'selected' : '' %>>30 днів</option>
-        <option value="90" <%= period === '90' ? 'selected' : '' %>>90 днів</option>
-        <option value="365" <%= period === '365' ? 'selected' : '' %>>Рік</option>
-        <option value="all" <%= period === 'all' ? 'selected' : '' %>>Увесь час</option>
-      </select>
-    </form></div>
+    <div class="report-actions" aria-label="Керування звітами">
+      <a class="button primary button-link report-export-button" href="/reports/export.xlsx?period=<%= period %>">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3v12"></path>
+          <path d="m7 10 5 5 5-5"></path>
+          <path d="M5 21h14"></path>
+        </svg>
+        <span>Експорт в Excel</span>
+      </a>
+      <a class="secondary-button button-link report-csv-button" href="/reports/export.csv?period=<%= period %>">CSV</a>
+      <form method="get" action="/reports" class="period-filter">
+        <select name="period" aria-label="Період звіту" onchange="this.form.submit()">
+          <option value="7" <%= period === '7' ? 'selected' : '' %>>7 днів</option>
+          <option value="30" <%= period === '30' ? 'selected' : '' %>>30 днів</option>
+          <option value="90" <%= period === '90' ? 'selected' : '' %>>90 днів</option>
+          <option value="365" <%= period === '365' ? 'selected' : '' %>>Рік</option>
+          <option value="all" <%= period === 'all' ? 'selected' : '' %>>Увесь час</option>
+        </select>
+      </form>
+    </div>
   </div>
 
   <section class="stats-grid reports-stats">

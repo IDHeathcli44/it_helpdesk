@@ -693,6 +693,19 @@ dd { margin: 4px 0 0; }
 .history-list { margin: 0; padding-left: 20px; }
 .history-list li { margin-bottom: 14px; }
 .history-list span { display: block; color: var(--muted); font-size: 12px; }
+.report-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.report-actions a { text-decoration: none; }
+.report-actions .secondary-button { min-height: 43px; }
+.report-export-button { gap: 8px; white-space: nowrap; }
+.report-export-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.report-csv-button { min-width: 64px; }
+.period-filter { margin: 0; }
 .period-filter select { min-width: 150px; }
 .report-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
 .bar-list { display: grid; gap: 12px; }
@@ -710,6 +723,7 @@ progress { width: 100%; accent-color: var(--blue); }
 @media (max-width: 700px) {
   .stats-grid, .meta-grid { grid-template-columns: 1fr; }
   .daily-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .report-actions { width: 100%; justify-content: flex-start; }
 }
 
 .button-link { display:inline-flex; align-items:center; justify-content:center; }
