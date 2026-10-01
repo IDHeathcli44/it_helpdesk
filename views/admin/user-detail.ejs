@@ -1,0 +1,24 @@
+<%- include('../partials/head', { title: t('Користувач — {name}', { name: targetUser.full_name }) }) %>
+<%- include('../partials/nav') %>
+<main class="container">
+  <div class="page-title"><div>
+    <a class="back-link" href="/admin/users"><%= t('← До списку користувачів') %></a>
+    <h1><%= targetUser.full_name %></h1>
+    <p><%= t('Лише перегляд') %></p>
+  </div></div>
+  <section class="card">
+    <dl class="meta-grid">
+      <% for (const [label, value] of [
+        ['ПІБ', targetUser.full_name], ['Логін', targetUser.username],
+        ['Псевдонім', targetUser.nickname], ['Email', targetUser.email],
+        ['Телефон', targetUser.phone], ['Посада', targetUser.position],
+        ['Відділ', targetUser.department], ['Кабінет / місце', targetUser.office],
+        ['Роль', t(roleLabels[targetUser.role])],
+        ['Стан', t(targetUser.is_active ? 'Активний' : 'Вимкнений')]
+      ]) { %>
+        <div><dt><%= t(label) %></dt><dd><%= value || '—' %></dd></div>
+      <% } %>
+    </dl>
+  </section>
+</main>
+<%- include('../partials/footer') %>

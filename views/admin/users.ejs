@@ -1,40 +1,42 @@
-<%- include('../partials/head', { title: 'Користувачі' }) %>
+<%- include('../partials/head', { title: t('Користувачі') }) %>
 <%- include('../partials/nav') %>
 
 <main class="container">
   <div class="page-title">
     <div>
-      <h1>Користувачі</h1>
-      <p>Створення, вимкнення та повне видалення облікових записів.</p>
+      <h1><%= t('Користувачі') %></h1>
+      <p><%= t(permissions.manageUsers ? 'Створення, вимкнення та повне видалення облікових записів.' : 'Перегляд облікових записів.') %></p>
     </div>
   </div>
 
   <%- include('../partials/flash') %>
 
+  <% if (permissions.manageUsers) { %>
   <section class="card">
-    <h2>Додати користувача</h2>
+    <h2><%= t('Додати користувача') %></h2>
     <form method="post" action="/admin/users" class="form-row">
-      <input name="fullName" placeholder="ПІБ" required>
-      <input name="username" placeholder="Логін" required>
-      <input type="password" name="password" minlength="8" placeholder="Тимчасовий пароль" required>
-      <select name="role" aria-label="Роль користувача">
-        <option value="user">Користувач</option>
-        <option value="it">IT-спеціаліст</option>
-        <option value="admin">Адміністратор</option>
+      <input name="fullName" placeholder="<%= t('ПІБ') %>" required>
+      <input name="username" placeholder="<%= t('Логін') %>" required>
+      <input type="password" name="password" minlength="8" placeholder="<%= t('Тимчасовий пароль') %>" required>
+      <select name="role" aria-label="<%= t('Роль користувача') %>">
+        <% Object.entries(roleLabels).forEach(([value, label]) => { %>
+          <option value="<%= value %>"><%= t(label) %></option>
+        <% }) %>
       </select>
-      <button class="primary" type="submit">Створити</button>
+      <button class="primary" type="submit"><%= t('Створити') %></button>
     </form>
   </section>
+  <% } %>
 
   <section class="card table-wrap">
     <table>
       <thead>
         <tr>
-          <th>Користувач</th>
-          <th>Роль</th>
-          <th>Стан</th>
-          <th>Перший вхід</th>
-          <th>Дії</th>
+          <th><%= t('Користувач') %></th>
+          <th><%= t('Роль') %></th>
+          <th><%= t('Стан') %></th>
+          <th><%= t('Перший вхід') %></th>
+          <th><%= t('Дії') %></th>
         </tr>
       </thead>
       <tbody>
@@ -44,17 +46,19 @@
               <a class="user-profile-link" href="/admin/users/<%= user.id %>"><strong><%= user.full_name %></strong></a>
               <div class="muted"><%= user.username %><%= user.email ? ' · ' + user.email : '' %></div>
             </td>
-            <td><%= user.role %></td>
-            <td><%= user.is_active ? 'Активний' : 'Вимкнений' %></td>
-            <td><%= user.must_change_password ? 'Потрібна зміна пароля' : 'Пароль встановлено' %></td>
+            <td><%= t(roleLabels[user.role] || user.role) %></td>
+            <td><%= t(user.is_active ? 'Активний' : 'Вимкнений') %></td>
+            <td><%= t(user.must_change_password ? 'Потрібна зміна пароля' : 'Пароль встановлено') %></td>
             <td class="actions">
-              <a class="small-action-link" href="/admin/users/<%= user.id %>">Редагувати</a>
+              <a class="small-action-link" href="/admin/users/<%= user.id %>"><%= t(permissions.manageUsers ? 'Редагувати' : 'Переглянути') %></a>
+              <% if (permissions.manageUsers) { %>
               <form method="post" action="/admin/users/<%= user.id %>/toggle">
-                <button type="submit"><%= user.is_active ? 'Вимкнути' : 'Увімкнути' %></button>
+                <button type="submit"><%= t(user.is_active ? 'Вимкнути' : 'Увімкнути') %></button>
               </form>
-              <form method="post" action="/admin/users/<%= user.id %>/delete" onsubmit="return confirm('Повністю видалити користувача?')">
-                <button class="danger" type="submit">Видалити</button>
+              <form method="post" action="/admin/users/<%= user.id %>/delete" data-confirm="<%= t('Повністю видалити користувача?') %>" onsubmit="return confirm(this.dataset.confirm)">
+                <button class="danger" type="submit"><%= t('Видалити') %></button>
               </form>
+              <% } %>
             </td>
           </tr>
         <% }) %>

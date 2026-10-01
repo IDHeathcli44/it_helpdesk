@@ -1,7 +1,8 @@
 const bcrypt = require('bcryptjs');
 const repository = require('./userRepository');
+const { ROLES } = require('../../config/constants');
 
-const ALLOWED_ROLES = new Set(['user', 'it', 'admin']);
+const ALLOWED_ROLES = new Set(Object.values(ROLES));
 
 function listUsers() {
   return repository.list();

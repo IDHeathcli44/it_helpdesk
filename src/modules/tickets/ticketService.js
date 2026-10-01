@@ -2,13 +2,14 @@ const repository = require('./ticketRepository');
 const { STATUS_LABELS, PRIORITY_LABELS } = require('./ticketConstants');
 const notificationService = require('../notifications/notificationService');
 const userService = require('../users/userService');
+const { can } = require('../../config/permissions');
 
 function isStaff(user) {
   return ['it', 'admin'].includes(user.role);
 }
 
 function getDashboard(user) {
-  const staff = isStaff(user);
+  const staff = can(user, 'viewAllTickets');
   const criteria = { staff, userId: user.id };
   return {
     tickets: repository.listDashboard(criteria),
@@ -28,7 +29,7 @@ function getList(user, query = {}) {
       (/^[1-9]\d*$/.test(query.assigned || '') && Number.isSafeInteger(Number(query.assigned)))
       ? query.assigned : ''
   };
-  return repository.listDashboard({ staff: isStaff(user), userId: user.id, filters });
+  return repository.listDashboard({ staff: can(user, 'viewAllTickets'), userId: user.id, filters });
 }
 
 function getCreateData(user) {
@@ -87,7 +88,7 @@ function requestPasswordReset({ user, io }) {
 function getDetails(id, user) {
   const ticket = repository.findDetails(id);
   if (!ticket) return { outcome: 'not_found' };
-  if (!isStaff(user) && ticket.created_by !== user.id) return { outcome: 'forbidden' };
+  if (!can(user, 'viewAllTickets') && ticket.created_by !== user.id) return { outcome: 'forbidden' };
   return {
     outcome: 'ok',
     data: {
@@ -105,6 +106,7 @@ function getDetails(id, user) {
 }
 
 function addComment({ ticketId, body, user, io }) {
+  if (!can(user, 'commentTickets')) return 'forbidden';
   const ticket = repository.findForComment(ticketId);
   if (!ticket) return 'not_found';
   const staff = isStaff(user);
@@ -260,16 +262,17 @@ function setPasswordResetTemporaryPassword({ ticketId, user, temporaryPassword, 
   return 'ok';
 }
 
-function formatDuration(minutes) {
+function formatDuration(minutes, locale = 'uk') {
   if (minutes === null || minutes === undefined || Number.isNaN(Number(minutes))) return '—';
   const rounded = Math.max(0, Math.round(Number(minutes)));
   const days = Math.floor(rounded / 1440);
   const hours = Math.floor((rounded % 1440) / 60);
   const mins = rounded % 60;
   const parts = [];
-  if (days) parts.push(`${days} дн`);
-  if (hours) parts.push(`${hours} год`);
-  if (mins || parts.length === 0) parts.push(`${mins} хв`);
+  const units = locale === 'en' ? ['d', 'h', 'min'] : ['дн', 'год', 'хв'];
+  if (days) parts.push(`${days} ${units[0]}`);
+  if (hours) parts.push(`${hours} ${units[1]}`);
+  if (mins || parts.length === 0) parts.push(`${mins} ${units[2]}`);
   return parts.join(' ');
 }
 

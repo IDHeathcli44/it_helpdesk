@@ -1,16 +1,16 @@
-<%- include('../partials/head', { title: `Заявка #${ticket.id}` }) %>
+<%- include('../partials/head', { title: t('Заявка #{id}', { id: ticket.id }) }) %>
 <%- include('../partials/nav') %>
 
 <main class="container">
   <div class="page-title">
     <div>
-      <a class="back-link" href="/">← До списку заявок</a>
+      <a class="back-link" href="/"><%= t('← До списку заявок') %></a>
       <h1>#<%= ticket.id %> — <%= ticket.title %></h1>
-      <p>Створено: <%= ticket.created_at %></p>
+      <p><%= t('Створено:') %> <%= ticket.created_at %></p>
     </div>
     <div class="ticket-badges">
-      <span class="badge priority-<%= ticket.priority %>"><%= priorityLabels[ticket.priority] %></span>
-      <span class="badge status-<%= ticket.status %>"><%= statusLabels[ticket.status] %></span>
+      <span class="badge priority-<%= ticket.priority %>"><%= t(priorityLabels[ticket.priority]) %></span>
+      <span class="badge status-<%= ticket.status %>"><%= t(statusLabels[ticket.status]) %></span>
     </div>
   </div>
 
@@ -19,21 +19,21 @@
   <div class="detail-grid">
     <div>
       <section class="card">
-        <h2>Опис проблеми</h2>
+        <h2><%= t('Опис проблеми') %></h2>
         <p class="ticket-description"><%= ticket.description %></p>
         <dl class="meta-grid">
-          <div><dt>Категорія</dt><dd><%= ticket.category %></dd></div>
-          <div><dt>Автор</dt><dd><%= ticket.creator_name || 'Видалений користувач' %></dd></div>
-          <div><dt>Відділ</dt><dd><%= ticket.department || '—' %></dd></div>
-          <div><dt>Кабінет</dt><dd><%= ticket.office || '—' %></dd></div>
-          <div><dt>Виконавець</dt><dd><%= ticket.assignee_name || 'Не призначено' %></dd></div>
-          <div><dt>Обладнання</dt><dd><% if (ticket.equipment_id) { %><a href="/equipment/<%= ticket.equipment_id %>"><%= ticket.equipment_name %><%= ticket.equipment_asset_tag ? ' · ' + ticket.equipment_asset_tag : '' %></a><% } else { %>—<% } %></dd></div>
-          <div><dt>Останнє оновлення</dt><dd><%= ticket.updated_at %></dd></div>
+          <div><dt><%= t('Категорія') %></dt><dd><%= t(ticket.category) %></dd></div>
+          <div><dt><%= t('Автор') %></dt><dd><%= ticket.creator_name || t('Видалений користувач') %></dd></div>
+          <div><dt><%= t('Відділ') %></dt><dd><%= ticket.department || '—' %></dd></div>
+          <div><dt><%= t('Кабінет') %></dt><dd><%= ticket.office || '—' %></dd></div>
+          <div><dt><%= t('Виконавець') %></dt><dd><%= ticket.assignee_name || t('Не призначено') %></dd></div>
+          <div><dt><%= t('Обладнання') %></dt><dd><% if (ticket.equipment_id) { %><a href="/equipment/<%= ticket.equipment_id %>"><%= ticket.equipment_name %><%= ticket.equipment_asset_tag ? ' · ' + ticket.equipment_asset_tag : '' %></a><% } else { %>—<% } %></dd></div>
+          <div><dt><%= t('Останнє оновлення') %></dt><dd><%= ticket.updated_at %></dd></div>
         </dl>
 
         <% if (attachments.length) { %>
           <div class="ticket-attachments">
-            <h3>Прикріплені зображення</h3>
+            <h3><%= t('Прикріплені зображення') %></h3>
             <div class="attachment-grid">
               <% attachments.forEach(file => { %>
                 <a class="attachment-card" href="/uploads/tickets/<%= file.stored_name %>" target="_blank" rel="noopener">
@@ -47,81 +47,83 @@
       </section>
 
       <section class="card">
-        <h2>Коментарі</h2>
+        <h2><%= t('Коментарі') %></h2>
         <div class="comments">
-          <% if (!comments.length) { %><p class="muted">Коментарів поки немає.</p><% } %>
+          <% if (!comments.length) { %><p class="muted"><%= t('Коментарів поки немає.') %></p><% } %>
           <% comments.forEach(comment => { %>
             <article class="comment <%= ['it','admin'].includes(comment.author_role) ? 'staff-comment' : '' %>">
-              <header><strong><%= comment.author_name || 'Видалений користувач' %></strong><time><%= comment.created_at %></time></header>
+              <header><strong><%= comment.author_name || t('Видалений користувач') %></strong><time><%= comment.created_at %></time></header>
               <p><%= comment.body %></p>
             </article>
           <% }) %>
         </div>
+        <% if (permissions.commentTickets) { %>
         <form action="/tickets/<%= ticket.id %>/comments" method="post" class="form-grid comment-form">
-          <label>Новий коментар<textarea name="body" rows="4" required placeholder="Напишіть повідомлення..."></textarea></label>
-          <button class="primary" type="submit">Додати коментар</button>
+          <label><%= t('Новий коментар') %><textarea name="body" rows="4" required placeholder="<%= t('Напишіть повідомлення...') %>"></textarea></label>
+          <button class="primary" type="submit"><%= t('Додати коментар') %></button>
         </form>
+        <% } %>
       </section>
     </div>
 
     <aside>
       <% if (isStaff) { %>
         <section class="card">
-          <h2>Керування заявкою</h2>
+          <h2><%= t('Керування заявкою') %></h2>
           <% if (!ticket.assigned_to && !['done', 'closed'].includes(ticket.status)) { %>
             <form action="/tickets/<%= ticket.id %>/accept" method="post" class="form-grid ticket-accept-form">
-              <button class="primary" type="submit">Прийняти заявку</button>
+              <button class="primary" type="submit"><%= t('Прийняти заявку') %></button>
             </form>
           <% } %>
           <% if (ticket.category === 'Відновлення доступу' && ticket.status === 'in_progress' && Number(ticket.assigned_to) === Number(currentUser.id)) { %>
             <form action="/tickets/<%= ticket.id %>/reset-password" method="post" class="form-grid password-reset-form">
               <label>
-                Тимчасовий пароль
+                <%= t('Тимчасовий пароль') %>
                 <input type="password" name="temporaryPassword" minlength="8" required autocomplete="new-password">
               </label>
-              <button class="secondary" type="submit">Встановити тимчасовий пароль</button>
-              <small class="field-hint">Передайте пароль користувачеві окремим безпечним каналом.</small>
+              <button class="secondary" type="submit"><%= t('Встановити тимчасовий пароль') %></button>
+              <small class="field-hint"><%= t('Передайте пароль користувачеві окремим безпечним каналом.') %></small>
             </form>
           <% } %>
           <% if (ticket.category !== 'Відновлення доступу') { %>
           <form action="/tickets/<%= ticket.id %>/update" method="post" class="form-grid">
-            <label>Статус
+            <label><%= t('Статус') %>
               <select name="status">
                 <% Object.entries(statusLabels).forEach(([value, label]) => { %>
-                  <option value="<%= value %>" <%= ticket.status === value ? 'selected' : '' %>><%= label %></option>
+                  <option value="<%= value %>" <%= ticket.status === value ? 'selected' : '' %>><%= t(label) %></option>
                 <% }) %>
               </select>
             </label>
-            <label>Виконавець
+            <label><%= t('Виконавець') %>
               <select name="assignedTo">
-                <option value="">Не призначено</option>
+                <option value=""><%= t('Не призначено') %></option>
                 <% staffUsers.forEach(user => { %>
                   <option value="<%= user.id %>" <%= ticket.assigned_to === user.id ? 'selected' : '' %>><%= user.full_name %></option>
                 <% }) %>
               </select>
             </label>
-            <button class="primary" type="submit">Зберегти зміни</button>
+            <button class="primary" type="submit"><%= t('Зберегти зміни') %></button>
           </form>
           <% } %>
         </section>
       <% } %>
 
       <section class="card">
-        <h2>Час заявки</h2>
+        <h2><%= t('Час заявки') %></h2>
         <dl class="timeline-metrics">
-          <div><dt>Перша реакція</dt><dd><%= ticket.first_response_at ? formatDuration((new Date(ticket.first_response_at) - new Date(ticket.created_at)) / 60000) : 'Ще не було' %></dd></div>
-          <div><dt>До виконання</dt><dd><%= (ticket.resolved_at || ticket.closed_at) ? formatDuration((new Date(ticket.resolved_at || ticket.closed_at) - new Date(ticket.created_at)) / 60000) : 'В процесі' %></dd></div>
-          <div><dt>Початок роботи</dt><dd><%= ticket.work_started_at || '—' %></dd></div>
-          <div><dt>Виконано</dt><dd><%= ticket.resolved_at || '—' %></dd></div>
-          <div><dt>Закрито</dt><dd><%= ticket.closed_at || '—' %></dd></div>
+          <div><dt><%= t('Перша реакція') %></dt><dd><%= ticket.first_response_at ? formatDuration((new Date(ticket.first_response_at) - new Date(ticket.created_at)) / 60000) : t('Ще не було') %></dd></div>
+          <div><dt><%= t('До виконання') %></dt><dd><%= (ticket.resolved_at || ticket.closed_at) ? formatDuration((new Date(ticket.resolved_at || ticket.closed_at) - new Date(ticket.created_at)) / 60000) : t('В процесі') %></dd></div>
+          <div><dt><%= t('Початок роботи') %></dt><dd><%= ticket.work_started_at || '—' %></dd></div>
+          <div><dt><%= t('Виконано') %></dt><dd><%= ticket.resolved_at || '—' %></dd></div>
+          <div><dt><%= t('Закрито') %></dt><dd><%= ticket.closed_at || '—' %></dd></div>
         </dl>
       </section>
 
       <section class="card">
-        <h2>Історія</h2>
+        <h2><%= t('Історія') %></h2>
         <ol class="history-list">
           <% history.forEach(item => { %>
-            <li><strong><%= item.details %></strong><span><%= item.author_name || 'Система' %> · <%= item.created_at %></span></li>
+            <li><strong><%= t(item.details) %></strong><span><%= item.author_name || t('Система') %> · <%= item.created_at %></span></li>
           <% }) %>
         </ol>
       </section>

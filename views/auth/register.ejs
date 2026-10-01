@@ -1,4 +1,4 @@
-<%- include('../partials/head', { title: 'Реєстрація' }) %>
+<%- include('../partials/head', { title: t('Реєстрація') }) %>
 
 <main class="auth-shell">
   <section class="auth-visual">
@@ -8,25 +8,25 @@
       </span>
       <span>IT HelpDesk</span>
     </div>
-    <h2>Реєстрація нового користувача</h2>
-    <p>Після створення облікового запису можна одразу подавати заявки та контролювати їх виконання.</p>
+    <h2><%= t('Реєстрація нового користувача') %></h2>
+    <p><%= t('Після створення облікового запису можна одразу подавати заявки та контролювати їх виконання.') %></p>
   </section>
 
   <section class="auth-form-area">
     <div class="card auth-card">
-      <h1>Створити обліковий запис</h1>
-      <p class="auth-intro">Заповніть дані, які допоможуть IT-відділу швидше знайти вас.</p>
+      <h1><%= t('Створити обліковий запис') %></h1>
+      <p class="auth-intro"><%= t('Заповніть дані, які допоможуть IT-відділу швидше знайти вас.') %></p>
 
       <%- include('../partials/flash') %>
 
       <form method="post" action="/register" class="form-grid">
         <label>
-          ПІБ
+          <%= t('ПІБ') %>
           <input name="fullName" required autocomplete="name">
         </label>
 
         <label>
-          Логін
+          <%= t('Логін') %>
           <input name="username" required autocomplete="username">
         </label>
 
@@ -36,29 +36,29 @@
             <input type="email" name="email" autocomplete="email">
           </label>
           <label>
-            Відділ
+            <%= t('Відділ') %>
             <input name="department">
           </label>
           <label>
-            Кабінет
+            <%= t('Кабінет') %>
             <input name="office">
           </label>
         </div>
 
         <label>
-          Пароль
+          <%= t('Пароль') %>
           <input type="password" name="password" minlength="8" required autocomplete="new-password">
         </label>
 
         <label>
-          Повторіть пароль
+          <%= t('Повторіть пароль') %>
           <input type="password" name="confirmPassword" minlength="8" required autocomplete="new-password">
         </label>
 
-        <button class="primary" type="submit">Створити обліковий запис</button>
+        <button class="primary" type="submit"><%= t('Створити обліковий запис') %></button>
       </form>
 
-      <p class="auth-footer-link"><a href="/login">Повернутися до входу</a></p>
+      <p class="auth-footer-link"><a href="/login"><%= t('Повернутися до входу') %></a></p>
     </div>
   </section>
 </main>

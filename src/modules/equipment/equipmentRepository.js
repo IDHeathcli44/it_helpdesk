@@ -1,6 +1,6 @@
 const { db } = require('../../config/database');
 
-function list({ type, status, search }) {
+function list({ type, status, search, ticketOwnerId = null }) {
   const where = [];
   const params = [];
   if (type) {
@@ -18,9 +18,11 @@ function list({ type, status, search }) {
     for (let index = 0; index < 5; index += 1) params.push(`%${search}%`);
   }
 
+  if (ticketOwnerId !== null) params.unshift(ticketOwnerId);
   return db.prepare(`
-    SELECT e.*, u.full_name AS assigned_user_name,
-      (SELECT COUNT(*) FROM tickets t WHERE t.equipment_id = e.id) AS ticket_count
+    SELECT e.*, u.full_name AS assigned_user_name, u.username AS assigned_username,
+      (SELECT COUNT(*) FROM tickets t WHERE t.equipment_id = e.id
+        ${ticketOwnerId === null ? '' : 'AND t.created_by = ?'}) AS ticket_count
     FROM equipment e
     LEFT JOIN users u ON u.id = e.assigned_user_id
     ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
@@ -34,7 +36,8 @@ function getStats() {
       SUM(type = 'computer') AS computers,
       SUM(type = 'printer') AS printers,
       SUM(status = 'repair') AS repair,
-      SUM(status = 'active') AS active
+      SUM(status = 'active') AS active,
+      SUM(status = 'reserve') AS reserve
     FROM equipment
   `).get();
 }
@@ -72,12 +75,14 @@ function findDetailsById(id) {
   `).get(id);
 }
 
-function listTickets(id) {
+function listTickets(id, ticketOwnerId = null) {
   return db.prepare(`
     SELECT id, title, status, priority, created_at
-    FROM tickets WHERE equipment_id = ? ORDER BY created_at DESC
-  `).all(id);
+    FROM tickets WHERE equipment_id = ?
+      ${ticketOwnerId === null ? '' : 'AND created_by = ?'} ORDER BY created_at DESC
+  `).all(...(ticketOwnerId === null ? [id] : [id, ticketOwnerId]));
 }
+
 
 function create(item) {
   return db.prepare(`

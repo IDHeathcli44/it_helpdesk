@@ -1,7 +1,11 @@
 const service = require('./reportService');
 
 function reports(req, res) {
-  return res.render('reports/index', service.getDashboard(req.query.period));
+  const data = service.getDashboard(req.query.period);
+  return res.render('reports/index', {
+    ...data,
+    formatDuration: (minutes) => data.formatDuration(minutes, req.locale)
+  });
 }
 
 function exportCsv(req, res) {

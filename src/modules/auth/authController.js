@@ -146,7 +146,7 @@ function startAuthenticatedSession(req, res, user, redirectTo, successMessage = 
   req.session.regenerate((regenerateError) => {
     if (regenerateError) {
       console.error('Session regeneration error:', regenerateError);
-      return res.status(500).send('Не вдалося створити безпечну сесію. Спробуйте ще раз.');
+      return res.status(500).send(req.t('Не вдалося створити безпечну сесію. Спробуйте ще раз.'));
     }
 
     req.session.user = user;
@@ -154,7 +154,7 @@ function startAuthenticatedSession(req, res, user, redirectTo, successMessage = 
     return req.session.save((saveError) => {
       if (saveError) {
         console.error('Session save error:', saveError);
-        return res.status(500).send('Не вдалося зберегти сесію. Спробуйте ще раз.');
+        return res.status(500).send(req.t('Не вдалося зберегти сесію. Спробуйте ще раз.'));
       }
       return res.redirect(redirectTo);
     });

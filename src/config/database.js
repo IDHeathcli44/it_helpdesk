@@ -1,5 +1,6 @@
 const { DatabaseSync } = require('node:sqlite');
 const bcrypt = require('bcryptjs');
+const { migrateUserRoles } = require('./migrations/userRoles');
 const {
   resolveDatabaseEnvironment
 } = require('./databaseEnvironment');
@@ -35,7 +36,7 @@ function initializeDatabase() {
       email TEXT UNIQUE,
       department TEXT,
       office TEXT,
-      role TEXT NOT NULL DEFAULT 'user' CHECK(role IN ('user','it','admin')),
+      role TEXT NOT NULL DEFAULT 'user' CHECK(role IN ('user','it','admin','accounting','procurement','director')),
       password_hash TEXT NOT NULL,
       must_change_password INTEGER NOT NULL DEFAULT 0,
       is_active INTEGER NOT NULL DEFAULT 1,
@@ -154,6 +155,7 @@ function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_ticket_attachments_ticket ON ticket_attachments(ticket_id);
   `);
 
+  migrateUserRoles(db, { dbPath, backup: databaseEnvironment !== 'test' });
   seedAccount('admin', 'Адміністратор', 'admin123', 'admin');
   seedAccount('it', 'IT спеціаліст', 'it12345', 'it');
 }

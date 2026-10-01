@@ -1,10 +1,10 @@
 const express = require('express');
 const controller = require('./reportController');
-const { requireRole } = require('../../middleware/auth');
+const { requirePermission } = require('../../middleware/auth');
 
 const router = express.Router();
-router.get('/reports', requireRole('it', 'admin'), controller.reports);
-router.get('/reports/export.xlsx', requireRole('it', 'admin'), controller.exportXlsx);
-router.get('/reports/export.csv', requireRole('it', 'admin'), controller.exportCsv);
+router.get('/reports', requirePermission('viewReports'), controller.reports);
+router.get('/reports/export.xlsx', requirePermission('viewReports'), controller.exportXlsx);
+router.get('/reports/export.csv', requirePermission('viewReports'), controller.exportCsv);
 
 module.exports = router;

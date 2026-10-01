@@ -1,5 +1,7 @@
 const service = require('./userService');
 const { setFlash } = require('../../utils/flash');
+const { ROLES } = require('../../config/constants');
+const { can } = require('../../config/permissions');
 
 function listUsers(req, res) {
   return res.render('admin/users', { users: service.listUsers() });
@@ -11,14 +13,14 @@ function showUser(req, res) {
     setFlash(req, 'error', 'Користувача не знайдено.');
     return res.redirect('/admin/users');
   }
-  return res.render('admin/user-edit', { targetUser });
+  return res.render(can(req.session.user, 'manageUsers') ? 'admin/user-edit' : 'admin/user-detail', { targetUser });
 }
 
 function createUser(req, res) {
   const fullName = String(req.body.fullName || '').trim();
   const username = String(req.body.username || '').trim().toLowerCase();
   const password = String(req.body.password || '');
-  const role = ['user', 'it', 'admin'].includes(req.body.role) ? req.body.role : 'user';
+  const role = Object.values(ROLES).includes(req.body.role) ? req.body.role : 'user';
   if (!fullName || !username || password.length < 8) {
     setFlash(req, 'error', 'Заповніть ім’я, логін і пароль від 8 символів.');
     return res.redirect('/admin/users');

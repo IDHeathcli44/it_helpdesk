@@ -5,7 +5,7 @@ function list(req, res) {
   const importErrors = req.session.importErrors || [];
   delete req.session.importErrors;
   return res.render('equipment/index', {
-    ...service.getList(req.query),
+    ...service.getList(req.query, req.session.user),
     importErrors
   });
 }
@@ -38,7 +38,7 @@ function create(req, res) {
 }
 
 function show(req, res) {
-  const details = service.getDetails(Number(req.params.id));
+  const details = service.getDetails(Number(req.params.id), req.session.user);
   if (!details) return res.status(404).render('errors/404');
   return res.render('equipment/detail', details);
 }
@@ -73,15 +73,15 @@ function importInventory(req, res) {
     return res.redirect('/equipment');
   }
   try {
-    const result = service.importInventory(req.file.buffer);
+    const result = service.importInventory(req.file.buffer, req.t);
     req.session.importErrors = result.errors;
     setFlash(
       req,
       result.imported ? 'success' : 'error',
-      `Імпорт завершено. Додано: ${result.imported}, пропущено: ${result.skipped}.`
+      req.t('Імпорт завершено. Додано: {imported}, пропущено: {skipped}.', result)
     );
   } catch (error) {
-    setFlash(req, 'error', `Не вдалося імпортувати файл: ${error.message}`);
+    setFlash(req, 'error', req.t('Не вдалося імпортувати файл: {error}', { error: error.message }));
   }
   return res.redirect('/equipment');
 }
@@ -98,8 +98,15 @@ function downloadImportTemplate(req, res) {
   return res.send(service.createImportTemplate());
 }
 
+function exportInventory(req, res) {
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', 'attachment; filename="equipment-inventory.xlsx"');
+  return res.send(service.exportInventory(req.query));
+}
+
 module.exports = {
   list,
+  exportInventory,
   showCreate,
   create,
   show,
