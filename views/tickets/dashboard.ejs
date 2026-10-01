@@ -1,48 +1,50 @@
-<%- include('../partials/head', { title: 'Заявки' }) %>
+<%- include('../partials/head', { title: t('Заявки') }) %>
 <%- include('../partials/nav') %>
 
 <main class="container">
   <div class="page-title">
     <div>
-      <h1><%= isStaff ? 'Усі заявки' : 'Мої заявки' %></h1>
-      <p>Контроль несправностей комп’ютерної техніки.</p>
+      <h1><%= t(isStaff ? 'Усі заявки' : 'Мої заявки') %></h1>
+      <p><%= t('Контроль несправностей комп’ютерної техніки.') %></p>
     </div>
-    <a class="button primary" href="/tickets/new">Створити заявку</a>
+    <% if (permissions.createTickets) { %>
+      <a class="button primary" href="/tickets/new"><%= t('Створити заявку') %></a>
+    <% } %>
   </div>
 
   <%- include('../partials/flash') %>
 
   <section class="stats-grid">
-    <article class="stat-card"><span>Усього</span><strong><%= stats.total || 0 %></strong></article>
-    <article class="stat-card"><span>Нові</span><strong><%= stats.new_count || 0 %></strong></article>
-    <article class="stat-card"><span>В роботі</span><strong><%= stats.in_progress_count || 0 %></strong></article>
-    <article class="stat-card"><span>Очікують</span><strong><%= stats.waiting_count || 0 %></strong></article>
-    <article class="stat-card"><span>Виконано</span><strong><%= stats.completed_count || 0 %></strong></article>
+    <article class="stat-card"><span><%= t('Усього') %></span><strong><%= stats.total || 0 %></strong></article>
+    <article class="stat-card"><span><%= t('Нові') %></span><strong><%= stats.new_count || 0 %></strong></article>
+    <article class="stat-card"><span><%= t('В роботі') %></span><strong><%= stats.in_progress_count || 0 %></strong></article>
+    <article class="stat-card"><span><%= t('Очікують') %></span><strong><%= stats.waiting_count || 0 %></strong></article>
+    <article class="stat-card"><span><%= t('Виконано') %></span><strong><%= stats.completed_count || 0 %></strong></article>
   </section>
 
   <section class="card table-wrap">
     <table>
       <thead>
         <tr>
-          <th>№</th><th>Тема</th><th>Категорія</th><th>Пріоритет</th><th>Статус</th>
-          <% if (isStaff) { %><th>Автор</th><th>Виконавець</th><% } %>
-          <th>Оновлено</th>
+          <th>№</th><th><%= t('Тема') %></th><th><%= t('Категорія') %></th><th><%= t('Пріоритет') %></th><th><%= t('Статус') %></th>
+          <% if (isStaff) { %><th><%= t('Автор') %></th><th><%= t('Виконавець') %></th><% } %>
+          <th><%= t('Оновлено') %></th>
         </tr>
       </thead>
       <tbody>
         <% if (!tickets.length) { %>
-          <tr><td colspan="<%= isStaff ? 8 : 6 %>" class="empty">Заявок поки немає.</td></tr>
+          <tr><td colspan="<%= isStaff ? 8 : 6 %>" class="empty"><%= t('Заявок поки немає.') %></td></tr>
         <% } %>
         <% tickets.forEach(ticket => { %>
           <tr class="clickable-row" data-href="/tickets/<%= ticket.id %>">
             <td><a href="/tickets/<%= ticket.id %>">#<%= ticket.id %></a></td>
             <td><strong><%= ticket.title %></strong><div class="muted"><%= ticket.description.slice(0, 90) %></div></td>
-            <td><%= ticket.category %></td>
-            <td><span class="badge priority-<%= ticket.priority %>"><%= priorityLabels[ticket.priority] %></span></td>
-            <td><span class="badge status-<%= ticket.status %>"><%= statusLabels[ticket.status] %></span></td>
+            <td><%= t(ticket.category) %></td>
+            <td><span class="badge priority-<%= ticket.priority %>"><%= t(priorityLabels[ticket.priority]) %></span></td>
+            <td><span class="badge status-<%= ticket.status %>"><%= t(statusLabels[ticket.status]) %></span></td>
             <% if (isStaff) { %>
-              <td><%= ticket.creator_name || 'Видалений користувач' %></td>
-              <td><%= ticket.assignee_name || 'Не призначено' %></td>
+              <td><%= ticket.creator_name || t('Видалений користувач') %></td>
+              <td><%= ticket.assignee_name || t('Не призначено') %></td>
             <% } %>
             <td><%= ticket.updated_at %></td>
           </tr>

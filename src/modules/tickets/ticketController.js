@@ -54,7 +54,10 @@ function show(req, res) {
   const result = service.getDetails(Number(req.params.id), req.session.user);
   if (result.outcome === 'not_found') return res.status(404).render('errors/404');
   if (result.outcome === 'forbidden') return res.status(403).render('errors/403');
-  return res.render('tickets/detail', result.data);
+  return res.render('tickets/detail', {
+    ...result.data,
+    formatDuration: (minutes) => service.formatDuration(minutes, req.locale)
+  });
 }
 
 function addComment(req, res) {

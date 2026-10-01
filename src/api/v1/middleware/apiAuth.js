@@ -1,4 +1,5 @@
 const { sendError } = require('./apiErrorHandler');
+const { can } = require('../../../config/permissions');
 
 function apiAuth(req, res, next) {
   res.set('Cache-Control', 'no-store');
@@ -20,4 +21,11 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { apiAuth, requireRole, requirePasswordChanged };
+function requirePermission(permission) {
+  return (req, res, next) => {
+    if (!can(req.session?.user, permission)) return sendError(res, 403, 'FORBIDDEN', 'Access denied');
+    next();
+  };
+}
+
+module.exports = { apiAuth, requireRole, requirePasswordChanged, requirePermission };

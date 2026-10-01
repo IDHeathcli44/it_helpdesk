@@ -1,9 +1,15 @@
 <!doctype html>
-<html lang="uk">
+<html lang="<%= locale %>" data-theme="<%= theme %>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= title %> — IT HelpDesk</title>
+  <script id="helpdesk-locale" type="application/json"><%- localeJson %></script>
+  <script src="/js/translation.js"></script>
+  <script src="/js/preferences.js"></script>
   <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
+<% if (!currentUser) { %>
+  <div class="auth-preferences"><%- include('preferences') %></div>
+<% } %>

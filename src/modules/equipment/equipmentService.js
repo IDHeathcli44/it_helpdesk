@@ -1,6 +1,7 @@
 const repository = require('./equipmentRepository');
 const { TYPES, STATUSES } = require('./equipmentConstants');
 const XLSX = require('xlsx');
+const { can } = require('../../config/permissions');
 
 const IMPORT_HEADERS = [
   'Інвентарний номер', 'Тип', 'Назва', 'Виробник', 'Модель',
@@ -10,7 +11,7 @@ const IMPORT_HEADERS = [
 ];
 const AMBIGUOUS_USER = Symbol('ambiguous-user');
 
-function getList(query) {
+function getList(query, user) {
   const filters = {
     type: Object.hasOwn(TYPES, query.type) ? query.type : '',
     status: Object.hasOwn(STATUSES, query.status) ? query.status : '',
@@ -18,7 +19,7 @@ function getList(query) {
   };
   return {
     ...filters,
-    equipment: repository.list(filters),
+    equipment: repository.list({ ...filters, ticketOwnerId: user && !can(user, 'viewAllTickets') ? user.id : null }),
     stats: repository.getStats(),
     types: TYPES,
     statuses: STATUSES
@@ -34,12 +35,12 @@ function getForm(id = null) {
   };
 }
 
-function getDetails(id) {
+function getDetails(id, user) {
   const item = repository.findDetailsById(id);
   if (!item) return null;
   return {
     item,
-    tickets: repository.listTickets(item.id),
+    tickets: repository.listTickets(item.id, user && !can(user, 'viewAllTickets') ? user.id : null),
     types: TYPES,
     statuses: STATUSES
   };
@@ -57,16 +58,16 @@ function remove(id) {
   return repository.remove(id);
 }
 
-function importInventory(buffer) {
+function importInventory(buffer, t = formatImportMessage) {
   const workbook = XLSX.read(buffer, { type: 'buffer' });
   const sheetName = workbook.SheetNames[0];
-  if (!sheetName) throw new Error('У файлі немає аркушів.');
+  if (!sheetName) throw new Error(t('У файлі немає аркушів.'));
   const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {
     defval: '',
     raw: false
   });
-  if (!rows.length) throw new Error('Файл не містить записів.');
-  if (rows.length > 5000) throw new Error('За один раз можна імпортувати не більше 5000 рядків.');
+  if (!rows.length) throw new Error(t('Файл не містить записів.'));
+  if (rows.length > 5000) throw new Error(t('За один раз можна імпортувати не більше 5000 рядків.'));
 
   const users = createUserLookup(repository.listImportUsers());
   const errors = [];
@@ -75,15 +76,15 @@ function importInventory(buffer) {
   rows.forEach((row, index) => {
     const rowNumber = index + 2;
     try {
-      const item = normalizeImportRow(row, users);
-      if (!item.name) throw new Error('не заповнено назву обладнання');
+      const item = normalizeImportRow(row, users, t);
+      if (!item.name) throw new Error(t('не заповнено назву обладнання'));
       if (item.assetTag && repository.findByAssetTag(item.assetTag)) {
-        throw new Error(`інвентарний номер «${item.assetTag}» уже існує`);
+        throw new Error(t('інвентарний номер «{assetTag}» уже існує', { assetTag: item.assetTag }));
       }
       repository.create(item);
       imported += 1;
     } catch (error) {
-      errors.push(`Рядок ${rowNumber}: ${error.message}.`);
+      errors.push(t('Рядок {row}: {error}.', { row: rowNumber, error: error.message }));
     }
   });
 
@@ -114,6 +115,26 @@ function createImportTemplate() {
   return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx', compression: true });
 }
 
+function exportInventory(query = {}) {
+  const filters = {
+    type: Object.hasOwn(TYPES, query.type) ? query.type : '',
+    status: Object.hasOwn(STATUSES, query.status) ? query.status : '',
+    search: String(query.search || '').trim()
+  };
+  const rows = repository.list(filters).map(item => [
+    item.asset_tag, item.type, item.name, item.manufacturer, item.model,
+    item.serial_number, item.ip_address, item.mac_address, item.operating_system,
+    item.cpu, item.ram_gb, item.storage, item.department, item.office,
+    item.assigned_username, item.status, item.notes
+  ]);
+  const sheet = XLSX.utils.aoa_to_sheet([IMPORT_HEADERS, ...rows]);
+  sheet['!cols'] = IMPORT_HEADERS.map(header => ({ wch: Math.max(18, header.length + 3) }));
+  sheet['!autofilter'] = { ref: sheet['!ref'] };
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, sheet, 'Інвентаризація');
+  return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx', compression: true });
+}
+
 function normalize(body) {
   return {
     assetTag: optional(body.assetTag),
@@ -141,7 +162,7 @@ function optional(value) {
   return normalized || null;
 }
 
-function normalizeImportRow(row, users) {
+function normalizeImportRow(row, users, t) {
   const typeValue = cell(row, ['Тип', 'type']) || 'other';
   const statusValue = cell(row, ['Статус', 'status']) || 'active';
   const type = matchDictionary(typeValue, TYPES, {
@@ -158,8 +179,8 @@ function normalizeImportRow(row, users) {
     'списано': 'retired',
     'writtenoff': 'retired'
   });
-  if (!type) throw new Error(`невідомий тип «${typeValue}»`);
-  if (!status) throw new Error(`невідомий статус «${statusValue}»`);
+  if (!type) throw new Error(t('невідомий тип «{type}»', { type: typeValue }));
+  if (!status) throw new Error(t('невідомий статус «{status}»', { status: statusValue }));
 
   const assignedUser = cell(row, [
     'Користувач', 'Логін користувача', 'assigned_user', 'username', 'email'
@@ -173,17 +194,17 @@ function normalizeImportRow(row, users) {
       : directMatch;
     if (matchedUser === AMBIGUOUS_USER) {
       throw new Error(
-        `значення «${assignedUser}» відповідає кільком користувачам; укажіть унікальний логін або email`
+        t('значення «{user}» відповідає кільком користувачам; укажіть унікальний логін або email', { user: assignedUser })
       );
     }
     assignedUserId = matchedUser || null;
-    if (!assignedUserId) throw new Error(`користувача «${assignedUser}» не знайдено`);
+    if (!assignedUserId) throw new Error(t('користувача «{user}» не знайдено', { user: assignedUser }));
   }
 
   const ramValue = cell(row, ['RAM (ГБ)', 'RAM', 'ram_gb']);
   const ramGb = ramValue === '' ? null : Number(String(ramValue).replace(',', '.'));
   if (ramGb !== null && (!Number.isFinite(ramGb) || ramGb < 0)) {
-    throw new Error('RAM має бути невід’ємним числом');
+    throw new Error(t('RAM має бути невід’ємним числом'));
   }
 
   return {
@@ -256,8 +277,13 @@ function normalizeKey(value) {
     .replace(/[^a-zа-яіїєґ0-9]+/giu, '');
 }
 
+function formatImportMessage(source, params = {}) {
+  return source.replace(/\{(\w+)\}/g, (match, key) => params[key] ?? match);
+}
+
 module.exports = {
   IMPORT_HEADERS,
+  exportInventory,
   getList,
   getForm,
   getDetails,

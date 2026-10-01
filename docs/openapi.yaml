@@ -67,7 +67,7 @@
   "/tickets":
     "get":
       "operationId": "listTickets"
-      "summary": "Own tickets for user; all tickets for it/admin. Filters apply before the 100-row cap."
+      "summary": "Own tickets for user/accounting/procurement; all tickets for it/admin/director. Filters apply before the 100-row cap."
       "parameters":
         -
           "name": "search"
@@ -177,7 +177,7 @@
   "/tickets/{id}":
     "get":
       "operationId": "getTicket"
-      "summary": "Owner or staff; another ordinary user receives 403, missing ticket 404."
+      "summary": "Owner or it/admin/director; other callers receive 403, missing ticket 404."
       "parameters":
         -
           "name": "id"
@@ -240,7 +240,7 @@
   "/equipment":
     "get":
       "operationId": "listEquipment"
-      "summary": "IT/admin equipment inventory."
+      "summary": "Equipment inventory for it/admin/accounting/procurement/director; linked ticket counts respect ownership."
       "parameters":
         -
           "name": "search"
@@ -337,7 +337,7 @@
   "/equipment/{id}":
     "get":
       "operationId": "getEquipment"
-      "summary": "IT/admin equipment details and linked ticket summaries."
+      "summary": "Equipment details for it/admin/accounting/procurement/director; linked ticket summaries respect ownership."
       "parameters":
         -
           "name": "id"
@@ -465,7 +465,7 @@
   "/users":
     "get":
       "operationId": "listUsers"
-      "summary": "Admin-only profiles; no security credentials."
+      "summary": "Admin/director profiles; no security credentials."
       "parameters": []
       "responses":
         "200":
@@ -530,7 +530,7 @@
   "/users/{id}":
     "get":
       "operationId": "getUser"
-      "summary": "Admin-only profile."
+      "summary": "Admin/director profile; no security credentials."
       "parameters":
         -
           "name": "id"
@@ -593,7 +593,7 @@
   "/reports/summary":
     "get":
       "operationId": "getReportSummary"
-      "summary": "IT/admin aggregate report from the existing service."
+      "summary": "IT/admin/director aggregate report from the existing service."
       "parameters":
         -
           "name": "period"
@@ -713,6 +713,9 @@
                 - "user"
                 - "it"
                 - "admin"
+                - "accounting"
+                - "procurement"
+                - "director"
             "mustChangePassword":
               "type": "boolean"
     "Ticket":
@@ -1390,6 +1393,9 @@
             - "user"
             - "it"
             - "admin"
+            - "accounting"
+            - "procurement"
+            - "director"
         "isActive":
           "type": "boolean"
         "createdAt":

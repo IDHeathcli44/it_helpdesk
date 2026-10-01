@@ -9,17 +9,21 @@ The machine-readable contract is in [openapi.yaml](openapi.yaml).
 
 Use the existing Express session cookie (`connect.sid`) obtained through the
 legacy `/login` form. There is no new login endpoint, JWT, OAuth or CORS setup.
-Requests use the same origin and existing session lifetime/role snapshot.
+Requests use the same origin and existing session lifetime. User roles and active
+status are refreshed from the database on each request.
 API responses use `Cache-Control: no-store`.
 
-| Resource | Anonymous | user | it | admin |
-| --- | --- | --- | --- | --- |
-| Session | 401 | own session | own session | own session |
-| Tickets list/detail | 401 | own tickets | all tickets | all tickets |
-| Equipment list/detail | 401 | 403 | allowed | allowed |
-| Notifications | 401 | own feed | own feed | own feed |
-| Users list/detail | 401 | 403 | 403 | allowed |
-| Reports summary | 401 | 403 | allowed | allowed |
+| Resource | Anonymous | user | it | admin | accounting / procurement | director |
+| --- | --- | --- | --- | --- | --- | --- |
+| Session | 401 | own session | own session | own session | own session | own session |
+| Tickets list/detail | 401 | own tickets | all tickets | all tickets | own tickets | all tickets |
+| Equipment list/detail | 401 | 403 | allowed | allowed | allowed | allowed |
+| Notifications | 401 | own feed | own feed | own feed | own feed | own feed |
+| Users list/detail | 401 | 403 | 403 | allowed | 403 | allowed |
+| Reports summary | 401 | 403 | allowed | allowed | 403 | allowed |
+
+Equipment linked-ticket lists and ticket counts also respect ticket ownership:
+accounting and procurement never receive other users' tickets through equipment.
 
 An existing ticket belonging to another ordinary user returns **403**; a missing
 ticket returns 404. This follows the existing ticket service and reveals whether
@@ -80,7 +84,7 @@ requests with a malformed resource ID return 400 before resource role checks.
   `meta: { unreadCount }` counts **all** unread notifications, not just this page.
   Reading does not mark anything read. Items contain `id`, `type`, `title`,
   `message`, `link`, `isRead` (boolean), `createdAt`.
-- `GET /users`: admin-only list; `meta: { count }`. No pagination.
+- `GET /users`: admin/director list; `meta: { count }`. No pagination.
 - `GET /users/{id}`: public administrative profile fields: `id`, `username`,
   `fullName`, `nickname`, `email`, `phone`, `department`, `office`, `position`,
   `role`, `isActive`, `createdAt`. No password hashes or password-reset fields.
@@ -141,8 +145,10 @@ also catches upstream parser errors; API failures never render EJS.
 
 `GET /api/health`, legacy notification GET/read/read-all endpoints, EJS pages,
 Excel import/template, report CSV/XLSX exports and Socket.IO are unchanged.
-There is no existing standalone equipment export route: existing XLSX export
-is `/reports/export.xlsx`. There is also no legacy GET `/tickets` list route;
+The web equipment export is `GET /equipment/export.xlsx` and accepts the same
+`search`, `type`, and `status` filters as the equipment list. It is available to
+all roles with equipment-view permission, including director. Report export
+remains `/reports/export.xlsx`. There is no legacy GET `/tickets` list route;
 the dashboard is `/`. GET `/tickets` continues to return its existing 404.
 
 Run `npm run check` for syntax, isolated database integration tests and legacy
@@ -155,4 +161,4 @@ Phase 4.3B should add mutation endpoints together with CSRF protection, request
 validation, session/security hardening and corresponding negative access tests.
 Pagination, stricter filter validation and consistent ISO timestamps can be
 introduced as explicit future contract changes. Existing MemoryStore and
-session role snapshots remain unchanged in this read-only phase.
+session storage remains unchanged; current roles are reloaded per request.

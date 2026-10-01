@@ -3,12 +3,12 @@ const { equipmentSerializer, equipmentDetailSerializer } = require('../serialize
 const { sendError } = require('../middleware/apiErrorHandler');
 
 exports.list = (req, res) => {
-  const data = service.getList(req.query).equipment.map(equipmentSerializer);
+  const data = service.getList(req.query, req.session.user).equipment.map(equipmentSerializer);
   return res.json({ data, meta: { count: data.length } });
 };
 
 exports.show = (req, res) => {
-  const result = service.getDetails(Number(req.params.id));
+  const result = service.getDetails(Number(req.params.id), req.session.user);
   if (!result) return sendError(res, 404, 'NOT_FOUND', 'Equipment not found');
   return res.json({ data: equipmentDetailSerializer(result) });
 };

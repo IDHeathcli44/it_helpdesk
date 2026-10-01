@@ -29,7 +29,8 @@ function getDashboard(period) {
   `).all();
 
   const byAssignee = db.prepare(`
-    SELECT COALESCE(u.full_name, 'Не призначено') AS assignee,
+    SELECT t.assigned_to AS assignee_id,
+      COALESCE(u.full_name, 'Не призначено') AS assignee,
       COUNT(*) AS total,
       SUM(CASE WHEN t.status IN ('done','closed') THEN 1 ELSE 0 END) AS completed,
       ROUND(AVG(CASE WHEN COALESCE(t.closed_at, t.resolved_at) IS NOT NULL

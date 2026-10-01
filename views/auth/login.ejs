@@ -1,4 +1,4 @@
-<%- include('../partials/head', { title: 'Вхід' }) %>
+<%- include('../partials/head', { title: t('Вхід') }) %>
 
 <main class="auth-shell">
   <section class="auth-visual">
@@ -8,38 +8,38 @@
       </span>
       <span>IT HelpDesk</span>
     </div>
-    <h2>Зручний облік заявок без зайвих складнощів</h2>
-    <p>Створюйте звернення, відстежуйте їхній стан і отримуйте допомогу IT-відділу в одному місці.</p>
+    <h2><%= t('Зручний облік заявок без зайвих складнощів') %></h2>
+    <p><%= t('Створюйте звернення, відстежуйте їхній стан і отримуйте допомогу IT-відділу в одному місці.') %></p>
   </section>
 
   <section class="auth-form-area">
     <div class="card auth-card">
-      <h1>Вхід у систему</h1>
-      <p class="auth-intro">Введіть логін і пароль свого облікового запису.</p>
+      <h1><%= t('Вхід у систему') %></h1>
+      <p class="auth-intro"><%= t('Введіть логін і пароль свого облікового запису.') %></p>
 
       <%- include('../partials/flash') %>
 
       <form method="post" action="/login" class="form-grid">
         <label>
-          Логін
+          <%= t('Логін') %>
           <input name="username" value="<%= loginUsername %>" required autocomplete="username" autocapitalize="none" spellcheck="false">
         </label>
 
         <label>
-          Пароль
+          <%= t('Пароль') %>
           <input type="password" name="password" required autocomplete="current-password">
         </label>
 
-        <button class="primary" type="submit">Увійти</button>
+        <button class="primary" type="submit"><%= t('Увійти') %></button>
       </form>
 
       <p class="auth-footer-link">
-        <a href="/forgot-password">Забули пароль?</a>
+        <a href="/forgot-password"><%= t('Забули пароль?') %></a>
       </p>
 
       <p class="auth-footer-link">
-        Немає облікового запису?
-        <a href="/register">Зареєструватися</a>
+        <%= t('Немає облікового запису?') %>
+        <a href="/register"><%= t('Зареєструватися') %></a>
       </p>
     </div>
   </section>

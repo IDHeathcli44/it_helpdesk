@@ -1,0 +1,10 @@
+<div class="display-preferences" role="group" aria-label="<%= t('Налаштування вигляду') %>">
+  <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="<%= theme === 'dark' %>" aria-label="<%= t(theme === 'dark' ? 'Світла тема' : 'Нічна тема') %>">
+    <span data-theme-icon aria-hidden="true"><%= theme === 'dark' ? '☀' : '☾' %></span>
+    <span data-theme-label><%= t(theme === 'dark' ? 'Світла тема' : 'Нічна тема') %></span>
+  </button>
+  <select class="language-select" data-language-select aria-label="<%= t('Мова інтерфейсу') %>">
+    <option value="uk" lang="uk" <%= locale === 'uk' ? 'selected' : '' %>>Українська</option>
+    <option value="en" lang="en" <%= locale === 'en' ? 'selected' : '' %>>English</option>
+  </select>
+</div>

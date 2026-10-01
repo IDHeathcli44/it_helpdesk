@@ -1,5 +1,66 @@
 // Невелика клієнтська логіка. Код навмисно не мініфікований.
 
+function translateHelpdeskText(source, params = {}) {
+  if (window.HelpdeskPreferences?.t) {
+    return window.HelpdeskPreferences.t(source, params);
+  }
+  return source.replace(/\{(\w+)\}/g, (match, key) => params[key] ?? match);
+}
+
+// Only system-generated notification fields are translated. Ticket subjects
+// and comment bodies are user content and retain their original language.
+function localizeHelpdeskNotification(notification) {
+  const result = { ...notification };
+  const titles = {
+    new_ticket: [/^Нова заявка #(\d+)$/, "Нова заявка #{id}"],
+    ticket_comment: [/^Новий коментар у заявці #(\d+)$/, "Новий коментар у заявці #{id}"],
+    ticket_status_changed: [/^Змінено статус заявки #(\d+)$/, "Змінено статус заявки #{id}"],
+    ticket_assignee_changed: [/^Оновлено заявку #(\d+)$/, "Оновлено заявку #{id}"],
+    ticket_accepted: [/^Заявку #(\d+) прийнято в роботу$/, "Заявку #{id} прийнято в роботу"],
+    password_reset_requested: [/^Запит на відновлення доступу #(\d+)$/, "Запит на відновлення доступу #{id}"],
+    password_reset_ready: [/^Відновлення доступу за заявкою #(\d+)$/, "Відновлення доступу за заявкою #{id}"],
+  };
+  const titleRule = titles[notification.type];
+  const titleMatch = titleRule && String(notification.title || "").match(titleRule[0]);
+  if (titleMatch) {
+    result.title = translateHelpdeskText(titleRule[1], { id: titleMatch[1] });
+  }
+
+  const message = String(notification.message || "");
+  if (notification.type === "ticket_status_changed") {
+    const match = message.match(/^Новий статус: (Нова|В роботі|Очікує|Виконано|Закрито)$/);
+    if (match) result.message = translateHelpdeskText("Новий статус: {status}", {
+      status: translateHelpdeskText(match[1]),
+    });
+  } else if (notification.type === "ticket_accepted") {
+    const match = message.match(/^(.+) прийняв заявку\.$/s);
+    if (match) result.message = translateHelpdeskText("{name} прийняв заявку.", { name: match[1] });
+  } else if (notification.type === "password_reset_requested") {
+    const match = message.match(/^(.+) не може увійти в систему\.$/s);
+    if (match) result.message = translateHelpdeskText("{name} не може увійти в систему.", { name: match[1] });
+  } else if (
+    notification.type === "ticket_assignee_changed" ||
+    notification.type === "password_reset_ready"
+  ) {
+    result.message = translateHelpdeskText(message);
+  }
+  return result;
+}
+
+function formatHelpdeskNotificationDate(value) {
+  if (!value) return "";
+  const raw = String(value);
+  const normalized = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(raw)
+    ? `${raw.replace(" ", "T")}Z`
+    : raw;
+  const date = new Date(normalized);
+  if (Number.isNaN(date.getTime())) return raw;
+  return new Intl.DateTimeFormat(
+    window.HelpdeskPreferences?.locale === "en" ? "en-GB" : "uk-UA",
+    { dateStyle: "short", timeStyle: "short" },
+  ).format(date);
+}
+
 document.querySelectorAll(".clickable-row[data-href]").forEach((row) => {
   row.addEventListener("click", (event) => {
     if (event.target.closest("a, button, input, select, textarea")) {
@@ -45,14 +106,14 @@ document.querySelectorAll(".clickable-row[data-href]").forEach((row) => {
     }
 
     soundButton.textContent = soundEnabled
-      ? "🔊 Звук увімкнено"
-      : "🔇 Увімкнути звук";
+      ? translateHelpdeskText("🔊 Звук увімкнено")
+      : translateHelpdeskText("🔇 Увімкнути звук");
 
     soundButton.classList.toggle("sound-enabled", soundEnabled);
 
     soundButton.title = soundEnabled
-      ? "Вимкнути звукові сповіщення"
-      : "Увімкнути звукові сповіщення";
+      ? translateHelpdeskText("Вимкнути звукові сповіщення")
+      : translateHelpdeskText("Увімкнути звукові сповіщення");
   }
 
   async function prepareNotificationSound() {
@@ -169,13 +230,14 @@ document.querySelectorAll(".clickable-row[data-href]").forEach((row) => {
 
     if (!Array.isArray(data.notifications)) {
       list.innerHTML =
-        '<p class="notification-empty">Нових сповіщень немає.</p>';
+        `<p class="notification-empty">${escapeHtml(translateHelpdeskText("Нових сповіщень немає."))}</p>`;
 
       return;
     }
 
     list.innerHTML = data.notifications.length
       ? data.notifications
+          .map(localizeHelpdeskNotification)
           .map(
             (item) => `
               <a
@@ -192,13 +254,13 @@ document.querySelectorAll(".clickable-row[data-href]").forEach((row) => {
                 </span>
 
                 <small>
-                  ${escapeHtml(item.created_at)}
+                  ${escapeHtml(formatHelpdeskNotificationDate(item.created_at))}
                 </small>
               </a>
             `,
           )
           .join("")
-      : '<p class="notification-empty">Нових сповіщень немає.</p>';
+      : `<p class="notification-empty">${escapeHtml(translateHelpdeskText("Нових сповіщень немає."))}</p>`;
   }
 
   function updateUnreadCount(unread) {
@@ -242,8 +304,9 @@ document.querySelectorAll(".clickable-row[data-href]").forEach((row) => {
             "Notification" in window &&
             Notification.permission === "granted"
           ) {
-            new Notification(newest.title || "IT HelpDesk", {
-              body: newest.message || "Нове сповіщення",
+            const localized = localizeHelpdeskNotification(newest);
+            new Notification(localized.title || "IT HelpDesk", {
+              body: localized.message || translateHelpdeskText("Нове сповіщення"),
             });
           }
         }
@@ -372,8 +435,9 @@ document.querySelectorAll(".clickable-row[data-href]").forEach((row) => {
       await playPdaSound();
 
       if ("Notification" in window && Notification.permission === "granted") {
-        new Notification(notification.title || "IT HelpDesk", {
-          body: notification.message || "Нове сповіщення",
+        const localized = localizeHelpdeskNotification(notification);
+        new Notification(localized.title || "IT HelpDesk", {
+          body: localized.message || translateHelpdeskText("Нове сповіщення"),
         });
       }
 
@@ -424,15 +488,15 @@ document.querySelectorAll(".clickable-row[data-href]").forEach((row) => {
     const file = input.files?.[0];
     fileName.textContent = file
       ? `${file.name} · ${formatInventoryFileSize(file.size)}`
-      : "XLSX, XLS або CSV · до 10 МБ";
+      : translateHelpdeskText("XLSX, XLS або CSV · до 10 МБ");
     picker?.classList.toggle("has-file", Boolean(file));
   });
 
   function formatInventoryFileSize(bytes) {
     if (bytes < 1024 * 1024) {
-      return `${Math.max(1, Math.ceil(bytes / 1024))} КБ`;
+      return translateHelpdeskText("{size} КБ", { size: Math.max(1, Math.ceil(bytes / 1024)) });
     }
-    return `${(bytes / 1024 / 1024).toFixed(1)} МБ`;
+    return translateHelpdeskText("{size} МБ", { size: (bytes / 1024 / 1024).toFixed(1) });
   }
 })();
 
@@ -483,11 +547,11 @@ document.querySelectorAll(".clickable-row[data-href]").forEach((row) => {
 
     for (const file of clipboardImages) {
       if (!allowedTypes.has(file.type)) {
-        rejected.push("Формат зображення з буфера не підтримується.");
+        rejected.push(translateHelpdeskText("Формат зображення з буфера не підтримується."));
       } else if (file.size > maxFileSize) {
-        rejected.push("Зображення з буфера перевищує 10 МБ.");
+        rejected.push(translateHelpdeskText("Зображення з буфера перевищує 10 МБ."));
       } else if (accepted.length >= availableSlots) {
-        rejected.push("До заявки можна додати не більше 5 зображень.");
+        rejected.push(translateHelpdeskText("До заявки можна додати не більше 5 зображень."));
       } else {
         accepted.push(file);
       }
@@ -500,13 +564,13 @@ document.querySelectorAll(".clickable-row[data-href]").forEach((row) => {
       }
       input.files = transfer.files;
     } else if (accepted.length) {
-      rejected.push("Цей браузер не дозволяє додавати файли з буфера обміну.");
+      rejected.push(translateHelpdeskText("Цей браузер не дозволяє додавати файли з буфера обміну."));
       accepted.length = 0;
     }
 
     const message = accepted.length
-      ? `Додано з буфера: ${accepted.length}.`
-      : rejected[0] || "Не вдалося додати зображення з буфера.";
+      ? translateHelpdeskText("Додано з буфера: {count}.", { count: accepted.length })
+      : rejected[0] || translateHelpdeskText("Не вдалося додати зображення з буфера.");
     renderSelectedFiles();
     showPasteStatus(message, accepted.length === 0 || rejected.length > 0);
   }
@@ -571,10 +635,10 @@ document.querySelectorAll(".clickable-row[data-href]").forEach((row) => {
 
   function formatFileSize(bytes) {
     if (bytes < 1024 * 1024) {
-      return `${Math.ceil(bytes / 1024)} КБ`;
+      return translateHelpdeskText("{size} КБ", { size: Math.ceil(bytes / 1024) });
     }
 
-    return `${(bytes / 1024 / 1024).toFixed(1)} МБ`;
+    return translateHelpdeskText("{size} МБ", { size: (bytes / 1024 / 1024).toFixed(1) });
   }
 
   function escapeFileName(value) {

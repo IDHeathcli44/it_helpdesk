@@ -3,6 +3,7 @@ const express = require('express');
 const session = require('express-session');
 const { refreshSessionUser, exposeUser } = require('./middleware/auth');
 const { exposeFlash } = require('./utils/flash');
+const { exposePreferences } = require('./middleware/preferences');
 const authRoutes = require('./modules/auth/authRoutes');
 const userRoutes = require('./modules/users/userRoutes');
 const ticketRoutes = require('./modules/tickets/ticketRoutes');
@@ -49,6 +50,7 @@ module.exports = {
   sessionMiddleware,
 };
 app.use(exposeUser);
+app.use(exposePreferences);
 app.use(exposeFlash);
 app.use((req, res, next) => {
   res.locals.currentPath = req.path;

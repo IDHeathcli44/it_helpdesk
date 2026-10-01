@@ -1,7 +1,10 @@
 const ROLES = Object.freeze({
   USER: 'user',
   IT: 'it',
-  ADMIN: 'admin'
+  ADMIN: 'admin',
+  ACCOUNTING: 'accounting',
+  PROCUREMENT: 'procurement',
+  DIRECTOR: 'director'
 });
 
 const TICKET_STATUSES = Object.freeze({

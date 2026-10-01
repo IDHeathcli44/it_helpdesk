@@ -1,11 +1,11 @@
-<%- include('../partials/head', { title: 'Нова заявка' }) %>
+<%- include('../partials/head', { title: t('Нова заявка') }) %>
 <%- include('../partials/nav') %>
 
 <main class="container">
   <div class="page-title">
     <div>
-      <h1>Створити заявку</h1>
-      <p>Опишіть несправність — IT-відділ побачить звернення у спільному списку.</p>
+      <h1><%= t('Створити заявку') %></h1>
+      <p><%= t('Опишіть несправність — IT-відділ побачить звернення у спільному списку.') %></p>
     </div>
   </div>
 
@@ -14,50 +14,50 @@
 
     <form method="post" action="/tickets" enctype="multipart/form-data" class="form-grid">
       <label>
-        Тема
-        <input name="title" required maxlength="160" placeholder="Наприклад: не друкує принтер">
+        <%= t('Тема') %>
+        <input name="title" required maxlength="160" placeholder="<%= t('Наприклад: не друкує принтер') %>">
       </label>
 
       <div class="form-row">
         <label>
-          Категорія
+          <%= t('Категорія') %>
           <select name="category">
-            <option>Комп’ютер</option>
-            <option>Принтер</option>
-            <option>Мережа</option>
-            <option>Програма</option>
-            <option>СКУД</option>
-            <option>Інше</option>
+            <option value="Комп’ютер"><%= t('Комп’ютер') %></option>
+            <option value="Принтер"><%= t('Принтер') %></option>
+            <option value="Мережа"><%= t('Мережа') %></option>
+            <option value="Програма"><%= t('Програма') %></option>
+            <option value="СКУД"><%= t('СКУД') %></option>
+            <option value="Інше"><%= t('Інше') %></option>
           </select>
         </label>
 
         <label>
-          Пріоритет
+          <%= t('Пріоритет') %>
           <select name="priority">
-            <option value="low">Низький</option>
-            <option value="normal" selected>Звичайний</option>
-            <option value="high">Високий</option>
-            <option value="critical">Критичний</option>
+            <option value="low"><%= t('Низький') %></option>
+            <option value="normal" selected><%= t('Звичайний') %></option>
+            <option value="high"><%= t('Високий') %></option>
+            <option value="critical"><%= t('Критичний') %></option>
           </select>
         </label>
       </div>
 
       <label>
-        Обладнання
+        <%= t('Обладнання') %>
         <select name="equipmentId">
-          <option value="">Не прив’язувати</option>
+          <option value=""><%= t('Не прив’язувати') %></option>
           <% equipment.forEach(item => { %>
             <option value="<%= item.id %>"><%= item.name %><%= item.asset_tag ? ' · ' + item.asset_tag : '' %></option>
           <% }) %>
         </select>
-        <small class="field-hint">Виберіть пристрій, з яким пов’язана несправність.</small>
+        <small class="field-hint"><%= t('Виберіть пристрій, з яким пов’язана несправність.') %></small>
       </label>
 
       <label>
-        Опис проблеми
-        <textarea id="ticketDescription" name="description" rows="8" required placeholder="Що сталося, коли виникла проблема та які повідомлення бачите?"></textarea>
+        <%= t('Опис проблеми') %>
+        <textarea id="ticketDescription" name="description" rows="8" required placeholder="<%= t('Що сталося, коли виникла проблема та які повідомлення бачите?') %>"></textarea>
         <small class="field-hint paste-image-hint">
-          Вставте скріншот прямо сюди: <kbd>Ctrl</kbd> + <kbd>V</kbd>. Зображення автоматично додасться до вкладень.
+          <%= t('Вставте скріншот прямо сюди:') %> <kbd>Ctrl</kbd> + <kbd>V</kbd><%= t('. Зображення автоматично додасться до вкладень.') %>
         </small>
         <small id="pasteImageStatus" class="paste-image-status" aria-live="polite"></small>
       </label>
@@ -65,28 +65,28 @@
       <div class="screenshot-upload">
         <div class="screenshot-upload-header">
           <div>
-            <strong>Скріншоти або зображення</strong>
-            <p>Можна додати до 5 файлів, не більше 10 МБ кожен.</p>
+            <strong><%= t('Скріншоти або зображення') %></strong>
+            <p><%= t('Можна додати до 5 файлів, не більше 10 МБ кожен.') %></p>
           </div>
         </div>
 
         <label class="file-drop-field" for="screenshots">
           <span class="file-drop-icon">＋</span>
-          <span>Натисніть, щоб вибрати зображення</span>
-          <small>PNG, JPG, WEBP, GIF та інші формати зображень</small>
+          <span><%= t('Натисніть, щоб вибрати зображення') %></span>
+          <small><%= t('PNG, JPG, WEBP, GIF та інші формати зображень') %></small>
         </label>
         <input id="screenshots" class="visually-hidden-file" type="file" name="screenshots" accept="image/jpeg,image/png,image/webp,image/gif,image/bmp" multiple>
         <div id="selected-files" class="selected-files" aria-live="polite"></div>
 
         <aside class="screenshot-tip">
-          <strong>Як зробити скріншот у Windows</strong>
-          <span><kbd>Win</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> — виділити потрібну частину екрана.</span>
-          <span><kbd>PrtScn</kbd> — скопіювати весь екран у буфер обміну.</span>
-          <span><kbd>Alt</kbd> + <kbd>PrtScn</kbd> — скопіювати активне вікно.</span>
+          <strong><%= t('Як зробити скріншот у Windows') %></strong>
+          <span><kbd>Win</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd> <%= t('— виділити потрібну частину екрана.') %></span>
+          <span><kbd>PrtScn</kbd> <%= t('— скопіювати весь екран у буфер обміну.') %></span>
+          <span><kbd>Alt</kbd> + <kbd>PrtScn</kbd> <%= t('— скопіювати активне вікно.') %></span>
         </aside>
       </div>
 
-      <button class="primary" type="submit">Надіслати заявку</button>
+      <button class="primary" type="submit"><%= t('Надіслати заявку') %></button>
     </form>
   </section>
 </main>

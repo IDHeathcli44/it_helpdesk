@@ -37,6 +37,14 @@ The assigned staff member may set a temporary password only from that accepted, 
 
 The equipment module accepts `.xlsx`, `.xls` and `.csv` inventory files through an in-memory, size-limited upload. The downloadable Excel template documents the supported Ukrainian columns and type/status codes. Import validates every row, rejects ambiguous user identities instead of assigning equipment arbitrarily, skips duplicates or invalid rows with a visible error summary, and keeps the existing manual equipment form available.
 
+### Interface preferences
+
+Theme and language controls are available on public authentication screens and in the signed-in header. Ukrainian is the default language; English translations cover the HTML interface and system messages. `helpdeskLanguage` is an allowlisted, year-long cookie read by `src/middleware/preferences.js`. It selects an explicit EJS translation helper and an escaped JSON catalog for client messages. Switching language reloads the current URL. User names, equipment names, ticket subjects, descriptions and comments are kept in their original language; stored form values and API v1 schemas remain unchanged. Existing Excel/CSV export columns and import templates remain unchanged.
+
+`public/js/preferences.js` applies the saved `helpdeskTheme` before the stylesheet paints, using the OS preference when there is no explicit choice. Theme changes persist in a cookie and local storage, with cookie fallback when storage is blocked. CSS semantic color variables provide light and dark palettes, including forms, notifications and authentication screens. `public/locales/en-*.json` contains the English catalogs and `public/js/translation.js` shares interpolation logic between server and browser.
+
+`test/preferences.test.js` verifies both languages against a temporary database, preserves user content and stored option values, checks invalid preferences and login errors, and exercises theme/language persistence and notification translation.
+
 ### Persistence
 
 `src/config/database.js` owns the `node:sqlite` `DatabaseSync` connection. It enables foreign keys and WAL mode and provides an idempotent `initializeDatabase()` function for the current schema, indexes, additive legacy columns and initial local accounts.
@@ -81,6 +89,32 @@ These accounts and their data are strictly for development and must never be use
 `data/helpdesk.db`, `data/helpdesk-dev.db`, any test database, and SQLite WAL/SHM files are ignored by Git. `data/.gitkeep` keeps the directory in a fresh clone. Development and test databases contain disposable non-production data and must not be committed.
 
 The current data model includes users, tickets, comments, ticket history, ticket attachments, equipment and notifications. Module repositories now contain runtime SQL. There is not yet a versioned migration system.
+
+### Additional business roles
+
+Permissions are centralized in `src/config/permissions.js` and enforced on both
+web and API routes; hiding UI controls is not the access-control boundary.
+
+| Role | Tickets | Equipment and inventory | Ticket reports | Users |
+| --- | --- | --- | --- | --- |
+| accounting (Бухгалтерія) | Create/read/comment own | Manage, import, export | Denied | Denied |
+| procurement (Забезпечення) | Create/read/comment own | Manage, import, export | Denied | Denied |
+| director (Дирекція) | Read all | Read and export | Read and export | Read only |
+
+Director cannot create tickets, comment, change assignments/statuses, reset other
+users' passwords or mutate inventory/users. Personal password changes, logout
+and marking their own notifications read remain available. Inventory balances
+mean existing equipment with status `reserve`, not a separate consumables ledger.
+`GET /equipment/export.xlsx` exports inventory using the current list filters;
+the export uses import-compatible column headers and type/status codes.
+
+Existing SQLite role constraints are updated on startup by
+`src/config/migrations/userRoles.js`. Before rebuilding an old users table in a
+non-test environment, a consistent `*.before-roles-<UUID>.db` backup is created
+next to the database. The transaction preserves user IDs, password hashes, extra
+columns, indexes/triggers and foreign-key links; failures roll back. New or
+already updated databases do not need rebuilding. Tests use disposable databases
+and do not migrate either persistent database.
 
 ### Server-rendered frontend
 

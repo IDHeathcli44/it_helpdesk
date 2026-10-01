@@ -1,5 +1,6 @@
 const { ROLES } = require('../config/constants');
 const authService = require('../modules/auth/authService');
+const { can, permissionsFor, ROLE_LABELS } = require('../config/permissions');
 
 function refreshSessionUser(req, res, next) {
   const sessionUser = req.session?.user;
@@ -23,6 +24,8 @@ function refreshSessionUser(req, res, next) {
 
 function exposeUser(req, res, next) {
   res.locals.currentUser = req.session?.user || null;
+  res.locals.permissions = permissionsFor(res.locals.currentUser);
+  res.locals.roleLabels = ROLE_LABELS;
   next();
 }
 
@@ -43,10 +46,19 @@ function requireAdmin(req, res, next) {
   return requireRole(ROLES.ADMIN)(req, res, next);
 }
 
+function requirePermission(permission) {
+  return (req, res, next) => {
+    if (!req.session?.user) return res.redirect('/login');
+    if (!can(req.session.user, permission)) return res.status(403).render('errors/403');
+    next();
+  };
+}
+
 module.exports = {
   refreshSessionUser,
   exposeUser,
   requireAuth,
   requireRole,
-  requireAdmin
+  requireAdmin,
+  requirePermission
 };
